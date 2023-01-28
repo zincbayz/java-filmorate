@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.dao;
+package ru.yandex.practicum.filmorate.repository;
 
 
 import ru.yandex.practicum.filmorate.model.film.Film;
@@ -7,7 +7,7 @@ import ru.yandex.practicum.filmorate.model.film.Mpa;
 
 import java.util.List;
 
-public interface FilmDao {
+public interface FilmRepository {
     Film createFilm(Film film);
 
     Film update(Film film, int id);

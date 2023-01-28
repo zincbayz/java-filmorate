@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.dao;
+package ru.yandex.practicum.filmorate.repository;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +12,12 @@ import ru.yandex.practicum.filmorate.Util.UserMapper;
 import java.util.List;
 @Slf4j
 @Component
-public class UserDaoImpl implements UserDao {
+public class UserRepositoryImpl implements UserRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public UserDaoImpl(JdbcTemplate jdbcTemplate) {
+    public UserRepositoryImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 

@@ -1,10 +1,10 @@
-package ru.yandex.practicum.filmorate.dao;
+package ru.yandex.practicum.filmorate.repository;
 
 import ru.yandex.practicum.filmorate.model.user.User;
 
 import java.util.List;
 
-public interface UserDao {
+public interface UserRepository {
     User getUser(int id);
 
     List<User> getAllUsers();

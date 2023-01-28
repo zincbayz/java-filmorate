@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.client_request;
+package ru.yandex.practicum.filmorate.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.service.UserServiceImpl;
 import ru.yandex.practicum.filmorate.exception_handler.ValidationException;
 import ru.yandex.practicum.filmorate.model.user.User;
 
@@ -29,7 +29,7 @@ class UsersControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @MockBean
-    UserService userService;
+    UserServiceImpl userServiceImpl;
     @Test
     void shouldReturnAllUsers() {
 
@@ -39,8 +39,8 @@ class UsersControllerTest {
                 .login("kesha")
                 .birthday(LocalDate.of(2002,2,23))
                 .build());
-        when(userService.getAllUsers()).thenReturn(allUsers);
-        UsersController userController = new UsersController(userService);
+        when(userServiceImpl.getAllUsers()).thenReturn(allUsers);
+        UsersController userController = new UsersController(userServiceImpl);
         assertEquals(List.of(User.builder()
                 .name("kesha@gmail.com")
                 .email("qqqq")
@@ -58,7 +58,7 @@ class UsersControllerTest {
                 .login("kesha")
                 .birthday(LocalDate.of(2002,2,23))
                 .build());
-        when(userService.getUsersFriends(1)).thenReturn(allUsers);
+        when(userServiceImpl.getUsersFriends(1)).thenReturn(allUsers);
 
         mockMvc.perform(
                         get("/users/1/friends")
@@ -77,7 +77,7 @@ class UsersControllerTest {
                 .login("kesha")
                 .birthday(LocalDate.of(2002,2,23))
                 .build());
-        when(userService.getCommonFriends(1,2)).thenReturn(allUsers);
+        when(userServiceImpl.getCommonFriends(1,2)).thenReturn(allUsers);
 
         mockMvc.perform(
                         get("/users/1/friends/common/2")
@@ -111,7 +111,7 @@ class UsersControllerTest {
                 .login("kesha")
                 .birthday(LocalDate.of(2002,2,23))
                 .build();
-        when(userService.getUser(1)).thenReturn(user);
+        when(userServiceImpl.getUser(1)).thenReturn(user);
         mockMvc.perform(
                         get("/users/1")
                                 .content(objectMapper.writeValueAsString(user))
@@ -120,7 +120,7 @@ class UsersControllerTest {
                 .andExpect(status().isOk());
 
         user.setName("updatedName");
-        when(userService.update(user)).thenReturn(user);
+        when(userServiceImpl.update(user)).thenReturn(user);
         mockMvc.perform(
                         put("/users")
                                 .content(objectMapper.writeValueAsString(user))
@@ -139,7 +139,7 @@ class UsersControllerTest {
                 .login("kesha")
                 .birthday(LocalDate.of(2002,2,23))
                 .build();
-        when(userService.create(user)).thenThrow(new ValidationException("Error"));
+        when(userServiceImpl.create(user)).thenThrow(new ValidationException("Error"));
         mockMvc.perform(
                         post("/users").header("Content-Type", "application/json").content(objectMapper.writeValueAsString(user))
                 ).andExpect(status().isBadRequest())
@@ -155,7 +155,7 @@ class UsersControllerTest {
                 .login("kesha")
                 .birthday(LocalDate.of(2002,2,23))
                 .build();
-        when(userService.update(user)).thenReturn(user);
+        when(userServiceImpl.update(user)).thenReturn(user);
         mockMvc.perform(
                         put("/users")
                                 .content(objectMapper.writeValueAsString(user))
@@ -171,7 +171,7 @@ class UsersControllerTest {
                 .login("kesha")
                 .birthday(LocalDate.of(2002,2,23))
                 .build();
-        when(userService.update(user)).thenThrow(ValidationException.class);
+        when(userServiceImpl.update(user)).thenThrow(ValidationException.class);
         mockMvc.perform(
                         put("/users")
                                 .content(objectMapper.writeValueAsString(user))
@@ -190,7 +190,7 @@ class UsersControllerTest {
                 .login("kesha")
                 .birthday(LocalDate.of(2002,2,23))
                 .build();
-        when(userService.getUser(1)).thenReturn(user);
+        when(userServiceImpl.getUser(1)).thenReturn(user);
 
         mockMvc.perform(
                         get("/users/1")

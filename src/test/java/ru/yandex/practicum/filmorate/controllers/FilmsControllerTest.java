@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.client_request;
+package ru.yandex.practicum.filmorate.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -8,8 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.yandex.practicum.filmorate.model.user.User;
-import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.FilmServiceImpl;
 import ru.yandex.practicum.filmorate.exception_handler.ValidationException;
 import ru.yandex.practicum.filmorate.model.film.Film;
 
@@ -29,7 +28,7 @@ class FilmsControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @MockBean
-    FilmService filmService;
+    FilmServiceImpl filmServiceImpl;
     @Test
     void shouldReturnAllFilms() {
         List<Film> allFilms = List.of(Film.builder()
@@ -38,8 +37,8 @@ class FilmsControllerTest {
                         .releaseDate(LocalDate.of(2002,2,23))
                         .duration(10)
                         .build());
-        when(filmService.getAllFilms()).thenReturn(allFilms);
-        FilmsController filmsController = new FilmsController(filmService);
+        when(filmServiceImpl.getAllFilms()).thenReturn(allFilms);
+        FilmsController filmsController = new FilmsController(filmServiceImpl);
         assertEquals(allFilms, filmsController.getAllFilms());
     }
 
@@ -67,7 +66,7 @@ class FilmsControllerTest {
                 .releaseDate(LocalDate.of(2002,2,23))
                 .duration(1)
                 .build();
-        when(filmService.create(film)).thenThrow(new ValidationException("Error"));
+        when(filmServiceImpl.create(film)).thenThrow(new ValidationException("Error"));
         mockMvc.perform(
                         post("/films").header("Content-Type", "application/json").content(objectMapper.writeValueAsString(film))
                 ).andExpect(status().isBadRequest())
@@ -83,7 +82,7 @@ class FilmsControllerTest {
                 .releaseDate(LocalDate.of(2002,2,23))
                 .duration(10)
                 .build();
-        when(filmService.update(film, 1)).thenReturn(film);
+        when(filmServiceImpl.update(film, 1)).thenReturn(film);
         mockMvc.perform(
                         put("/films")
                                 .content(objectMapper.writeValueAsString(film))
@@ -99,7 +98,7 @@ class FilmsControllerTest {
                 .releaseDate(LocalDate.of(2002,2,23))
                 .duration(-10)
                 .build();
-        when(filmService.update(film, 1)).thenThrow(ValidationException.class);
+        when(filmServiceImpl.update(film, 1)).thenThrow(ValidationException.class);
         mockMvc.perform(
                         put("/films")
                                 .header("Content-Type", "application/json")
@@ -118,7 +117,7 @@ class FilmsControllerTest {
                 .releaseDate(LocalDate.of(2002,2,23))
                 .duration(10)
                 .build();
-        when(filmService.getFilm(1)).thenReturn(film);
+        when(filmServiceImpl.getFilm(1)).thenReturn(film);
 
         mockMvc.perform(
                         get("/films/1")
@@ -143,8 +142,8 @@ class FilmsControllerTest {
                         .releaseDate(LocalDate.of(2002,2,23))
                         .duration(100)
                         .build());
-        when(filmService.getPopularFilms(2)).thenReturn(allFilms);
-        FilmsController filmsController = new FilmsController(filmService);
+        when(filmServiceImpl.getPopularFilms(2)).thenReturn(allFilms);
+        FilmsController filmsController = new FilmsController(filmServiceImpl);
         assertEquals(allFilms, filmsController.getPopularFilms(String.valueOf(2)));
     }
 }

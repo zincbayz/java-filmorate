@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.dao;
+package ru.yandex.practicum.filmorate.repository;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,29 +16,58 @@ import java.util.*;
 
 @Slf4j
 @Repository
-public class FilmDaoImpl implements FilmDao {
+public class FilmRepositoryImpl implements FilmRepository {
     private static final String ALL_FILMS_SQL_QUERY = "SELECT * FROM Films JOIN Mpa ON Films.mpa_id=Mpa.mpa_id ";
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public FilmDaoImpl(JdbcTemplate jdbcTemplate) {
+    public FilmRepositoryImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
     public Film getFilm(int id) throws EmptyResultDataAccessException {
-         Film film = jdbcTemplate.queryForObject(ALL_FILMS_SQL_QUERY + "WHERE film_id = ?",
+        Film film = jdbcTemplate.queryForObject(ALL_FILMS_SQL_QUERY + "WHERE film_id = ?",
                 new FilmMapper(), id);
-         film.setGenres(getAllFilmsGenres(id));
+        film.setGenres(getAllFilmsGenres(id));
         return film;
     }
 
     @Override
     public List<Film> getAllFilms() {
         List<Film> all = jdbcTemplate.query(ALL_FILMS_SQL_QUERY, new FilmMapper());
+
+        /*SqlRowSet userRows = jdbcTemplate.queryForRowSet(
+                "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id ORDER BY film_id");
+
+
+        userRows.beforeFirst();
+        if (userRows.next()) {
+            for (Film film : all) {
+                int filmIdSql = Integer.parseInt(userRows.getString("film_id"));
+                if (film.getId() == filmIdSql) {
+                    Genre genre = new Genre();
+                    genre.setId(Integer.parseInt(userRows.getString("genre_id")));
+                    genre.setName(userRows.getString("name"));
+                    film.getGenres().add(genre);
+
+                }
+            }
+        }
+        return all;*/
+
+        final String genresQuery =
+                "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id";
+        List<Genre> filmGenres = jdbcTemplate.query(genresQuery, new GenreMapper());
+
+
+
         for (Film film : all) {
             film.setGenres(getAllFilmsGenres(film.getId()));
         }
         return all;
+
+
+
     }
 
     @Override
