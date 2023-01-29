@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.Util.MpaMapper;
 import ru.yandex.practicum.filmorate.model.film.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -34,40 +35,9 @@ public class FilmRepositoryImpl implements FilmRepository {
 
     @Override
     public List<Film> getAllFilms() {
-        List<Film> all = jdbcTemplate.query(ALL_FILMS_SQL_QUERY, new FilmMapper());
+        List<Film> filmsWithoutGenres = jdbcTemplate.query(ALL_FILMS_SQL_QUERY, new FilmMapper());
 
-        /*SqlRowSet userRows = jdbcTemplate.queryForRowSet(
-                "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id ORDER BY film_id");
-
-
-        userRows.beforeFirst();
-        if (userRows.next()) {
-            for (Film film : all) {
-                int filmIdSql = Integer.parseInt(userRows.getString("film_id"));
-                if (film.getId() == filmIdSql) {
-                    Genre genre = new Genre();
-                    genre.setId(Integer.parseInt(userRows.getString("genre_id")));
-                    genre.setName(userRows.getString("name"));
-                    film.getGenres().add(genre);
-
-                }
-            }
-        }
-        return all;*/
-
-        final String genresQuery =
-                "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id";
-        List<Genre> filmGenres = jdbcTemplate.query(genresQuery, new GenreMapper());
-
-
-
-        for (Film film : all) {
-            film.setGenres(getAllFilmsGenres(film.getId()));
-        }
-        return all;
-
-
-
+        return addGenresInFilm(filmsWithoutGenres);
     }
 
     @Override
@@ -81,11 +51,7 @@ public class FilmRepositoryImpl implements FilmRepository {
             popularFilms.removeAll(additionalFilms);
             popularFilms.addAll(additionalFilms);
         }
-
-        for (Film film : popularFilms) {
-            film.setGenres(getAllFilmsGenres(film.getId()));
-        }
-        return popularFilms;
+        return addGenresInFilm(popularFilms);
     }
 
 
@@ -208,4 +174,22 @@ public class FilmRepositoryImpl implements FilmRepository {
         jdbcTemplate.update(deleteGenreQuery, filmId);
     }
 
+    private List<Film> addGenresInFilm(List<Film> films) {
+        final String genreQuery = "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id";
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(genreQuery);
+
+        for (Film film : films) {
+            List<Genre> allFilmsGenres = rows.stream()
+                    .filter(stringObjectMap -> (int)stringObjectMap.get("FILM_ID") == film.getId())
+                    .map(stringObjectMap -> {
+                        Genre genre = new Genre();
+                        genre.setId((Integer) stringObjectMap.get("GENRE_ID"));
+                        genre.setName((String) stringObjectMap.get("NAME"));
+                        return genre;
+                    })
+                    .collect(Collectors.toList());
+            film.setGenres(allFilmsGenres);
+        }
+        return films;
+    }
 }
