@@ -7,8 +7,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import javax.validation.ConstraintViolationException;
+import ru.yandex.practicum.filmorate.exception_handler.exceptions.InternalServerError;
+import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
+import ru.yandex.practicum.filmorate.exception_handler.exceptions.ReviewNotFound;
+import ru.yandex.practicum.filmorate.exception_handler.exceptions.ValidationException;
 
 @Slf4j
 @RestControllerAdvice
@@ -31,6 +33,13 @@ public class ExceptionApiHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public @ResponseBody InternalServerError handleNotFound(InternalServerError e) {
         log.error("Exception has occurred " + e.getMessage());
+        return(e);
+    }
+
+    @ExceptionHandler({ReviewNotFound.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public @ResponseBody ReviewNotFound handleNotFound(ReviewNotFound e) {
+        log.error("Review wasn't found " + e.getMessage());
         return(e);
     }
 }
