@@ -37,7 +37,7 @@ public class ExceptionApiHandler {
     }
 
     @ExceptionHandler({ReviewNotFound.class})
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     public @ResponseBody ReviewNotFound handleNotFound(ReviewNotFound e) {
         log.error("Review wasn't found " + e.getMessage());
         return(e);

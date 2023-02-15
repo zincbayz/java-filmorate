@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.ReviewDto;
 import ru.yandex.practicum.filmorate.service.ReviewService;
+import javax.validation.Valid;
 
 import java.util.List;
 
@@ -24,19 +25,18 @@ public class ReviewController {
 
     @GetMapping()
     public List<ReviewDto> getAllReviewsByFilmId(@RequestParam(defaultValue = "0") String filmId,
-                                                 @RequestParam(defaultValue = "10")String count) {
-        List<ReviewDto> allDto = reviewService.getAllReviewsByFilmId(Integer.parseInt(filmId), Integer.parseInt(count));
-        return allDto;
+                                                 @RequestParam(defaultValue = "10") String count) {
+        return reviewService.getAllReviewsByFilmId(Integer.parseInt(filmId), Integer.parseInt(count));
     }
 
     @PostMapping()
-    public void addReview(@RequestBody ReviewDto reviewDto) {
-        reviewService.addReview(reviewDto);
+    public ReviewDto addReview(@RequestBody @Valid ReviewDto reviewDto) {
+        return reviewService.addReview(reviewDto);
     }
 
     @PutMapping()
-    public void editReview(@RequestBody ReviewDto reviewDto) {
-        reviewService.editReview(reviewDto);
+    public ReviewDto updateReview(@RequestBody ReviewDto reviewDto) {
+       return reviewService.updateReview(reviewDto);
     }
 
     @DeleteMapping("/{id}")

@@ -2,14 +2,22 @@ package ru.yandex.practicum.filmorate.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+
 @Data
 public class ReviewDto {
     private int reviewId;
+    @NotNull
     private String content;
     @JsonProperty("isPositive")
-    private boolean isPositive;
-    private int userId;
-    private int filmId;
+    @NotNull
+    private Boolean isPositive;
+    @NotNull
+    private Integer userId;
+    @NotNull
+    private Integer filmId;
 
     private int useful;
 

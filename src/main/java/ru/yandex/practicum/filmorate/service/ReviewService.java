@@ -5,9 +5,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dto.ReviewDto;
+import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.ReviewNotFound;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.repository.FilmRepositoryImpl;
 import ru.yandex.practicum.filmorate.repository.ReviewRepository;
+import ru.yandex.practicum.filmorate.repository.UserRepositoryImpl;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,20 +22,37 @@ public class ReviewService {
     private final ReviewRepository repository;
     private final ModelMapper modelMapper;
 
+    private final FilmRepositoryImpl filmRepository;
+
+    private final UserRepositoryImpl userRepository;
+
     @Autowired
-    public ReviewService(ReviewRepository repository, ModelMapper modelMapper) {
+    public ReviewService(ReviewRepository repository, ModelMapper modelMapper, FilmRepositoryImpl filmRepository, UserRepositoryImpl userRepository) {
         this.repository = repository;
         this.modelMapper = modelMapper;
+        this.filmRepository = filmRepository;
+        this.userRepository = userRepository;
     }
 
-    public void addReview(ReviewDto reviewDto) {
-        repository.save(convertDtoToReview(reviewDto));
+    public ReviewDto addReview(ReviewDto reviewDto) {
+        if(filmRepository.isFilmExist(reviewDto.getFilmId()) &&
+                userRepository.isUserExist(reviewDto.getUserId())) {
+            Review review = repository.save(convertDtoToReview(reviewDto));
+            return convertReviewToDto(review);
+        } else {
+            throw new RequiredObjectWasNotFound("User or Film not found");
+        }
     }
 
-    public void editReview(ReviewDto reviewDto) {
-        Review review = convertDtoToReview(reviewDto);
-        isReviewExist(review.getReviewId());
-        repository.save(review);
+    public ReviewDto updateReview(ReviewDto reviewDto) {
+        isReviewExist(reviewDto.getReviewId());
+        Review review = repository.findByReviewId(reviewDto.getReviewId());
+
+        review.setContent(reviewDto.getContent());
+        review.setIsPositive(reviewDto.getIsPositive());
+
+        Review updatedReview = repository.save(review);
+        return convertReviewToDto(updatedReview);
     }
 
     public void deleteReview(int reviewId) {
@@ -45,16 +66,15 @@ public class ReviewService {
     }
 
     public List<ReviewDto> getAllReviewsByFilmId(int filmId, int count) {
+        List<Review> unsortedReviews;
         if(filmId == 0) {
-            return convertReviewsToDtoList(repository.findAll());
+            unsortedReviews = repository.findAll();
         } else {
-            List<Review> reviews = repository.findByFilmIdEquals(filmId).stream()
-                    .sorted(Comparator.comparing(Review::getUseful).reversed())
-                    .limit(count)
-                    .collect(Collectors.toList());
-            return convertReviewsToDtoList(reviews);
+            unsortedReviews = repository.findAllByFilmId(filmId);
         }
+        return convertReviewsToDtoList(sortAllReviews(unsortedReviews, count));
     }
+
     @Transactional
     public void rateReview(int reviewId, int userId, int usefulness, String assessment) {
         isReviewExist(reviewId);
@@ -67,6 +87,7 @@ public class ReviewService {
         setReviewUsefulness(reviewId, usefulness);
         repository.deleteAssessment(reviewId, userId);
     }
+
 
     private void setReviewUsefulness(int reviewId, int usefulness) {
         Review review = repository.findByReviewId(reviewId);
@@ -83,6 +104,13 @@ public class ReviewService {
     private Review convertDtoToReview(ReviewDto reviewDto) {
         return this.modelMapper.map(reviewDto, Review.class);
 
+    }
+
+    private List<Review> sortAllReviews(List<Review> unsortedReviews, int count) {
+        return unsortedReviews.stream()
+                .sorted(Comparator.comparing(Review::getUseful).reversed())
+                .limit(count)
+                .collect(Collectors.toList());
     }
 
     private ReviewDto convertReviewToDto(Review review) {

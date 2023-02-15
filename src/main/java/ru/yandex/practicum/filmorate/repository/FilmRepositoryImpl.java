@@ -78,6 +78,19 @@ public class FilmRepositoryImpl implements FilmRepository {
         return updateFilmsGenre(film, filmId);
     }
 
+    public boolean isFilmExist(int filmId) {
+        String sql = "SELECT COUNT(*) FROM Films where film_id=?";
+
+        int count = jdbcTemplate.queryForObject(sql,
+                new Object[] { filmId }, Integer.class);
+
+        if (count >= 1)
+        {
+            return true;
+        }
+        return false;
+    }
+
 
     @Override
     public void like(int filmId, int userId) {

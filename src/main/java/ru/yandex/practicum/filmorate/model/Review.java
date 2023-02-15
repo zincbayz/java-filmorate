@@ -20,13 +20,13 @@ public class Review {
 
     @Column(name = "is_positive")
     @JsonProperty("isPositive")
-    private boolean isPositive;
+    private Boolean isPositive;
 
     @Column(name = "user_id")
-    private int userId;
+    private Integer userId;
 
     @Column(name = "film_id")
-    private int filmId;
+    private Integer filmId;
 
     @Column(name = "useful")
     private int useful;

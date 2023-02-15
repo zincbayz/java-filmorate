@@ -62,6 +62,19 @@ public class UserRepositoryImpl implements UserRepository {
                 new UserMapper());
     }
 
+    public boolean isUserExist(int userId) {
+        String sql = "SELECT COUNT(*) FROM Users where user_id=?";
+
+        int count = jdbcTemplate.queryForObject(sql,
+                new Object[] { userId }, Integer.class);
+
+        if (count >= 1)
+        {
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public User update(User user, int userId) {
         final String sqlQuery = "UPDATE Users SET email=?, login=?, name=?, birthday=? WHERE user_id=?";
