@@ -33,7 +33,10 @@ public class FilmsController {
         return filmServiceImpl.getPopularFilms(Integer.parseInt(count));
     }
 
-
+    @GetMapping("/director/{directorId}?sortBy=[year,likes]")
+    public List<Film> getSortedDirectorFilms(@PathVariable int directorId, @RequestParam String sortBy) {
+        return filmServiceImpl.getSortedDirectorFilms(directorId, sortBy);
+    }
 
 
 
@@ -67,6 +70,7 @@ public class FilmsController {
                 .duration(film.getDuration())
                 .mpa(film.getMpa())
                 .genres(film.getGenres())
+                .director(film.getDirector())
                 .build();
     }
 }

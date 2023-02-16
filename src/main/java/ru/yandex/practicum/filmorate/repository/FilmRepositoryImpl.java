@@ -18,7 +18,8 @@ import java.util.stream.Collectors;
 @Slf4j
 @Repository
 public class FilmRepositoryImpl implements FilmRepository {
-    private static final String ALL_FILMS_SQL_QUERY = "SELECT * FROM Films JOIN Mpa ON Films.mpa_id=Mpa.mpa_id ";
+    private static final String ALL_FILMS_SQL_QUERY = "SELECT * FROM Films " +
+            "JOIN Mpa ON Films.mpa_id=Mpa.mpa_id ";
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -109,21 +110,35 @@ public class FilmRepositoryImpl implements FilmRepository {
 
     @Override
     public Mpa getMpaById(int mpaId) {
-        Mpa mpa = jdbcTemplate.queryForObject("SELECT * FROM Mpa WHERE mpa_id=?",
+        return jdbcTemplate.queryForObject("SELECT * FROM Mpa WHERE mpa_id=?",
                 new MpaMapper(), mpaId);
-        return mpa;
+    }
+
+    @Override
+    public List<Film> getSortedDirectorFilms(int directorId, String sortBy) {
+        List<Film> sortedDirectorFilms = jdbcTemplate.query(ALL_FILMS_SQL_QUERY + "WHERE director_id = ? " + sortBy,
+                new FilmMapper(), directorId);
+
+        return addGenresInFilm(sortedDirectorFilms);
+    }
+
+    @Override
+    public void addDirectorToFilm(int filmId, int directorId) {
+        jdbcTemplate.update("UPDATE Films SET director_id = ? WHERE film_id = ?", directorId, filmId);
     }
 
     private int insertFilm(Film film) {
-        final String insertSql = "INSERT INTO Films(name, description, releaseDate, duration, mpa_id) " +
-                "VALUES (?, ?, ?, ?, ?)";
+        final String insertSql = "INSERT INTO Films(name, description, releaseDate, duration, mpa_id, director_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(insertSql,
                 film.getName(),
                 film.getDescription(),
                 film.getReleaseDate(),
                 film.getDuration(),
-                film.getMpa().getId());
+                film.getMpa().getId(),
+                film.getDirector().getId());
+
 
         int filmId = getInsertedFilmId();
 
@@ -156,8 +171,7 @@ public class FilmRepositoryImpl implements FilmRepository {
     private List<Genre> getAllFilmsGenres(int filmId) {
         final String genresQuery =
                 "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id WHERE film_id = ?";
-        List<Genre> filmGenres = jdbcTemplate.query(genresQuery, new GenreMapper(), filmId);
-        return filmGenres;
+        return jdbcTemplate.query(genresQuery, new GenreMapper(), filmId);
     }
 
     private Film updateFilmsGenre(Film film, int filmId) {

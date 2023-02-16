@@ -29,4 +29,8 @@ public interface FilmRepository {
     List<Mpa> getMpaRatings();
 
     Mpa getMpaById(int mpaId);
+
+    List<Film> getSortedDirectorFilms(int directorId, String sortBy);
+
+    void addDirectorToFilm(int filmId, int directorId);
 }
