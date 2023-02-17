@@ -1,40 +1,42 @@
 package ru.yandex.practicum.filmorate.service;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dto.DirectorDto;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.DirectorNotFound;
 import ru.yandex.practicum.filmorate.model.film.Director;
 import ru.yandex.practicum.filmorate.repository.DirectorRepository;
-import ru.yandex.practicum.filmorate.repository.FilmRepository;
-
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class DirectorService {
     private final DirectorRepository directorRepository;
-    private final FilmRepository filmRepository;
+    private final ModelMapper modelMapper;
 
-    public DirectorService(DirectorRepository directorRepository, FilmRepository filmRepository) {
+    public DirectorService(DirectorRepository directorRepository, ModelMapper modelMapper) {
         this.directorRepository = directorRepository;
-        this.filmRepository = filmRepository;
+        this.modelMapper = modelMapper;
     }
 
-    public List<Director> getAllDirectors() {
-        return directorRepository.findAll();
+    public List<DirectorDto> getAllDirectors() {
+        return convertDirectorsToDtoList(directorRepository.findAll());
     }
 
-    public Director getDirectorById(int directorId) {
+    public DirectorDto getDirectorById(int directorId) {
         isDirectorExist(directorId);
-        return directorRepository.findById(directorId);
+        return convertDirectorToDto(directorRepository.findById(directorId));
     }
 
-    public Director createDirector(Director director) {
-        return directorRepository.save(director);
+    public DirectorDto createDirector(DirectorDto directorDto) {
+        Director director = convertDtoToDirector(directorDto);
+        return convertDirectorToDto(directorRepository.save(director));
     }
 
-    public Director updateDirector(Director director) {
-        Director director1 = getDirectorById(director.getId());
-        director1.setName(director.getName());
-        return createDirector(director1);
+    public DirectorDto updateDirector(DirectorDto directorDto) {
+        DirectorDto updatedDirector = getDirectorById(directorDto.getId());
+        updatedDirector.setName(directorDto.getName());
+        return createDirector(updatedDirector);
     }
 
     public void deleteDirector(int directorId) {
@@ -42,9 +44,23 @@ public class DirectorService {
         directorRepository.deleteById(directorId);
     }
 
-    private void isDirectorExist(int directorId) {
+    void isDirectorExist(int directorId) {
         if(!directorRepository.existsById(directorId)) {
             throw new DirectorNotFound("Director id: " + directorId);
         }
+    }
+
+    private Director convertDtoToDirector(DirectorDto directorDto) {
+        return this.modelMapper.map(directorDto, Director.class);
+    }
+
+    private DirectorDto convertDirectorToDto(Director director) {
+        return this.modelMapper.map(director, DirectorDto.class);
+    }
+
+    private List<DirectorDto> convertDirectorsToDtoList(List<Director> reviews) {
+        return reviews.stream()
+                .map(review -> this.modelMapper.map(review, DirectorDto.class))
+                .collect(Collectors.toList());
     }
 }

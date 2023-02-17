@@ -18,10 +18,6 @@ public class FilmMapper implements RowMapper<Film> {
         mpa.setId(rs.getInt("mpa_id"));
         mpa.setName(rs.getString("mpa_name"));
 
-        Director director = new Director();
-        director.setId(rs.getInt("director_id"));
-        director.setName(rs.getString("director_name"));
-
 
 
         return Film.builder()
@@ -30,7 +26,6 @@ public class FilmMapper implements RowMapper<Film> {
                 .description(rs.getString("description"))
                 .releaseDate(rs.getDate("releaseDate").toLocalDate())
                 .duration(rs.getInt("duration"))
-                .director(director)
                 .mpa(mpa)
                 .build();
     }

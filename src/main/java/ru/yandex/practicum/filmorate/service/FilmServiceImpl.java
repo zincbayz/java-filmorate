@@ -5,13 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.model.film.Director;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.repository.FilmRepository;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
 import ru.yandex.practicum.filmorate.model.film.Genre;
 import ru.yandex.practicum.filmorate.model.film.Mpa;
-
 import java.util.List;
 
 @Slf4j
@@ -49,18 +47,8 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public Film create(Film film) {
-        Film createdFilm = filmRepository.createFilm(film);
-        /*if(film.getDirector() != null) {
-            return addDirectorToFilm(createdFilm, film.getDirector().getId());
-        }*/
-        return createdFilm;
-    }
-
-    private Film addDirectorToFilm(Film film, int directorId) {
-        filmRepository.addDirectorToFilm(film.getId(), directorId);
-        Director director = directorService.getDirectorById(directorId);
-        film.setDirector(director);
-        return film;
+        int filmId = filmRepository.createFilm(film);
+        return getFilm(filmId);
     }
 
     @Override
@@ -117,12 +105,14 @@ public class FilmServiceImpl implements FilmService {
     }
 
     public List<Film> getSortedDirectorFilms(int directorId, String sortBy) {
-        String sorting = "";
-        if(sortBy == "year") {
-            sorting = "ORDER BY COUNT(user_id) DESC";
+        directorService.isDirectorExist(directorId);
+        String sortRequest;
+        if("likes".equals(sortBy)) {
+            sortRequest = "SELECT *, (SELECT COUNT(user_id) FROM Likes GROUP BY film_id) AS likes FROM Films " +
+                    "JOIN Mpa ON Films.mpa_id=Mpa.mpa_id WHERE Films.director_id = ? ORDER BY likes DESC";
         } else {
-            sorting= "ORDER BY releaseDate DESC";
+            sortRequest = "SELECT * FROM Films JOIN Mpa ON Films.mpa_id=Mpa.mpa_id WHERE director_id = ? ORDER BY releaseDate";
         }
-        return filmRepository.getSortedDirectorFilms(directorId, sorting);
+        return filmRepository.getSortedDirectorFilms(directorId, sortRequest);
     }
 }

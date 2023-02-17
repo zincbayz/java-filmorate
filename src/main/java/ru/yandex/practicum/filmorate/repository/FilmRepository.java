@@ -8,7 +8,7 @@ import ru.yandex.practicum.filmorate.model.film.Mpa;
 import java.util.List;
 
 public interface FilmRepository {
-    Film createFilm(Film film);
+    int createFilm(Film film);
 
     Film update(Film film, int id);
 
@@ -32,5 +32,5 @@ public interface FilmRepository {
 
     List<Film> getSortedDirectorFilms(int directorId, String sortBy);
 
-    void addDirectorToFilm(int filmId, int directorId);
+    void insertDirectorToFilm(int filmId, int directorId);
 }

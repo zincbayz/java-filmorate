@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS Films (
     releaseDate date,
     duration    int,
     mpa_id      INTEGER REFERENCES Mpa (mpa_id),
-    director_id INTEGER REFERENCES Directors(director_id)
+    director_id INTEGER REFERENCES Directors(director_id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS Users (
@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS Genres (
 
 CREATE TABLE IF NOT EXISTS Film_Genre (
     film_id  INTEGER REFERENCES Films (film_id) ON DELETE CASCADE,
-    genre_id INTEGER REFERENCES Genres (genre_id)
+    genre_id INTEGER REFERENCES Genres (genre_id),
+    UNIQUE(film_id, genre_id)
 );
 
 CREATE TABLE IF NOT EXISTS Friends (
