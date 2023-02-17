@@ -153,7 +153,7 @@ public class FilmRepositoryImpl implements FilmRepository {
         }
     }
 
-    private List<Genre> getAllFilmsGenres(int filmId) {
+    List<Genre> getAllFilmsGenres(int filmId) {
         final String genresQuery =
                 "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id WHERE film_id = ?";
         List<Genre> filmGenres = jdbcTemplate.query(genresQuery, new GenreMapper(), filmId);
