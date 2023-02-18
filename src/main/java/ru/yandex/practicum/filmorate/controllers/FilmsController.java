@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception_handler.exeptions.InvalidParameterException;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.service.FilmServiceImpl;
 import javax.validation.Valid;
@@ -33,7 +34,10 @@ public class FilmsController {
         return filmServiceImpl.getPopularFilms(Integer.parseInt(count));
     }
 
-
+    @GetMapping("/director/{directorId}")
+    public List<Film> getSortedDirectorFilms(@PathVariable int directorId, @RequestParam String sortBy) {
+        return filmServiceImpl.getSortedDirectorFilms(directorId, sortBy);
+    }
 
 
 
@@ -67,6 +71,25 @@ public class FilmsController {
                 .duration(film.getDuration())
                 .mpa(film.getMpa())
                 .genres(film.getGenres())
+                .directors(film.getDirectors())
                 .build();
     }
+
+    @GetMapping("/search")
+    private List<Film> searchFilms(
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "by", defaultValue = "", required = false) List<String> by) throws InvalidParameterException {
+
+        if ( query==null || query.isBlank()) {
+            return filmServiceImpl.searchFilms();
+        }
+        if ( by.size() == 1 && (by.get(0).equals("director") || by.get(0).equals("title")) ||
+                (by.size() == 2 && (by.get(0).equals("director") && by.get(1).equals("title")))) {
+            return filmServiceImpl.searchFilms(query, by);
+        }
+        else {
+            throw new InvalidParameterException("Указаны неверные параметры запроса!");
+        }
+    }
+
 }

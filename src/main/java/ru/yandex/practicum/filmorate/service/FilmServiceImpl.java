@@ -5,12 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception_handler.exeptions.RequiredObjectWasNotFound;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.repository.FilmRepository;
-import ru.yandex.practicum.filmorate.exception_handler.RequiredObjectWasNotFound;
 import ru.yandex.practicum.filmorate.model.film.Genre;
 import ru.yandex.practicum.filmorate.model.film.Mpa;
-
 import java.util.List;
 
 @Slf4j
@@ -18,10 +17,12 @@ import java.util.List;
 public class FilmServiceImpl implements FilmService {
 
     private final FilmRepository filmRepository;
+    private final DirectorService directorService;
 
     @Autowired
-    public FilmServiceImpl(@Qualifier("filmRepositoryImpl") FilmRepository filmRepository) {
+    public FilmServiceImpl(@Qualifier("filmRepositoryImpl") FilmRepository filmRepository, DirectorService directorService) {
         this.filmRepository = filmRepository;
+        this.directorService = directorService;
     }
 
     @Override
@@ -43,10 +44,10 @@ public class FilmServiceImpl implements FilmService {
         return filmRepository.getPopularFilms(countTopFilms);
     }
 
-
     @Override
     public Film create(Film film) {
-        return filmRepository.createFilm(film);
+        int filmId = filmRepository.createFilm(film);
+        return getFilm(filmId);
     }
 
     @Override
@@ -57,7 +58,6 @@ public class FilmServiceImpl implements FilmService {
             throw new RequiredObjectWasNotFound("Film id " + id);
         }
     }
-
 
     @Override
     public void like(int filmId, int userId) {
@@ -101,4 +101,37 @@ public class FilmServiceImpl implements FilmService {
         }
         return filmRepository.getMpaById(mpaId);
     }
+
+    @Override
+    public List<Film> searchFilms() {
+        return filmRepository.searchFilms();
+    }
+
+    @Override
+    public List<Film> searchFilms(String query, List<String> by) {
+
+        if (by.size() == 1) {
+            if (by.get(0).equals("director")) {
+                return filmRepository.searchFilmsByDirector(query);
+            }
+            if (by.get(0).equals("title")) {
+                return filmRepository.searchFilmsByTitle(query);
+            }
+        }
+        return filmRepository.searchFilmsByDirectorAndTitle(query);
+    }
+
+    public List<Film> getSortedDirectorFilms(int directorId, String sortBy) {
+        directorService.isDirectorExist(directorId);
+        String sortRequest;
+        if("likes".equals(sortBy)) {
+            sortRequest = "SELECT *, (SELECT COUNT(user_id) FROM Likes GROUP BY film_id) AS likes FROM Films " +
+                    "JOIN Mpa ON Films.mpa_id=Mpa.mpa_id WHERE Films.director_id = ? ORDER BY likes DESC";
+        } else {
+            sortRequest = "SELECT * FROM Films JOIN Mpa ON Films.mpa_id=Mpa.mpa_id WHERE director_id = ? ORDER BY releaseDate";
+        }
+        return filmRepository.getSortedDirectorFilms(directorId, sortRequest);
+    }
+
+
 }

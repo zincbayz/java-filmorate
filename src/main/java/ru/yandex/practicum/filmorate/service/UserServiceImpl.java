@@ -5,10 +5,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.yandex.practicum.filmorate.exception_handler.ValidationException;
+import ru.yandex.practicum.filmorate.exception_handler.exeptions.RequiredObjectWasNotFound;
+import ru.yandex.practicum.filmorate.exception_handler.exeptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.user.User;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
-import ru.yandex.practicum.filmorate.exception_handler.RequiredObjectWasNotFound;
 import java.util.*;
 
 @Slf4j

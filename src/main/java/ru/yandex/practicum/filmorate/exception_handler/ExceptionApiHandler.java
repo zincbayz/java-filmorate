@@ -1,14 +1,15 @@
 package ru.yandex.practicum.filmorate.exception_handler;
 
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.spi.ErrorMessage;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import javax.validation.ConstraintViolationException;
+import ru.yandex.practicum.filmorate.exception_handler.exeptions.*;
 
 @Slf4j
 @RestControllerAdvice
@@ -32,5 +33,21 @@ public class ExceptionApiHandler {
     public @ResponseBody InternalServerError handleNotFound(InternalServerError e) {
         log.error("Exception has occurred " + e.getMessage());
         return(e);
+    }
+
+    @ExceptionHandler({DirectorNotFound.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public @ResponseBody DirectorNotFound handleNotFound(DirectorNotFound e) {
+        log.error("Director wasn't found: " + e.getMessage());
+        return(e);
+    }
+
+
+    @ExceptionHandler(InvalidParameterException.class)
+    public ResponseEntity<ErrorMessage> InvalidParameterException(InvalidParameterException exception) {
+        log.error(exception.getMessage(), exception);
+       return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorMessage(exception.getMessage()));
     }
 }
