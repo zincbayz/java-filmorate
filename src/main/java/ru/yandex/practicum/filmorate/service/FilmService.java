@@ -35,6 +35,7 @@ public interface FilmService {
     List<Mpa> getMpaRatings();
 
     Mpa getMpaById(int mpaId);
+    void deleteFilmById(int id);
 
 
 }

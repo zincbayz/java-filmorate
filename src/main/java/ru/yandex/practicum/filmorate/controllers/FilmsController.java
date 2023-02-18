@@ -33,10 +33,6 @@ public class FilmsController {
         return filmServiceImpl.getPopularFilms(Integer.parseInt(count));
     }
 
-
-
-
-
     @PostMapping
     public Film createFilm(@Valid @RequestBody Film film) {
         return filmServiceImpl.create(buildFilm(film));
@@ -56,6 +52,11 @@ public class FilmsController {
     @DeleteMapping("/{id}/like/{userId}")
     public void deleteLike(@PathVariable("id") int filmId, @PathVariable int userId) {
         filmServiceImpl.deleteLike(filmId, userId);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteFilmById(@PathVariable int id) {
+        filmServiceImpl.deleteFilmById(id);
     }
 
     private Film buildFilm(Film film) {

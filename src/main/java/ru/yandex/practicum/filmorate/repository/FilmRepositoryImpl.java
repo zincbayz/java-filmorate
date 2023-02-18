@@ -114,6 +114,20 @@ public class FilmRepositoryImpl implements FilmRepository {
         return mpa;
     }
 
+    @Override
+    public void deleteFilmById(int id) {
+        Film film = getFilm(id);
+        //удаление отзывов!!!!!!!!!!!
+
+        String deleteQuery = "DELETE FROM likes WHERE film_id=?";
+        jdbcTemplate.update(deleteQuery, id);
+
+        final String genresSqlQuery = "DELETE FROM film_genre WHERE FILM_ID = ?";
+        jdbcTemplate.update(genresSqlQuery, id);
+        final String sqlQuery = "DELETE FROM films WHERE FILM_ID = ?";
+        jdbcTemplate.update(sqlQuery, id);
+    }
+
     private int insertFilm(Film film) {
         final String insertSql = "INSERT INTO Films(name, description, releaseDate, duration, mpa_id) " +
                 "VALUES (?, ?, ?, ?, ?)";
