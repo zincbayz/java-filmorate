@@ -5,7 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.Util.FilmMapper;
 import ru.yandex.practicum.filmorate.exception_handler.RequiredObjectWasNotFound;
+import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.model.user.User;
 import ru.yandex.practicum.filmorate.Util.UserMapper;
 
@@ -46,6 +48,26 @@ public class UserRepositoryImpl implements UserRepository {
         return jdbcTemplate.query(sqlQuery, new UserMapper(), id, otherId);
     }
 
+    @Override
+    public List<Film> getRecommendations(int id) {
+        final String ALL_FILMS_SQL_QUERY = "SELECT * FROM Films JOIN Mpa ON Films.mpa_id=Mpa.mpa_id ";
+        final String getRecommendationFilms = ALL_FILMS_SQL_QUERY +
+                "WHERE film_id IN (SELECT film_id FROM (SELECT user_id FROM Likes WHERE film_id in (SELECT film_id " +
+                "FROM LIKES WHERE user_id = ?) AND user_id != ? GROUP BY user_id having MAX(film_id) > 1 ORDER BY " +
+                "MAX(film_id) desc LIMIT 3) t1 JOIN (SELECT user_id, film_id FROM Likes) t2 ON t1.user_id = t2.user_id" +
+                " where t2.film_id NOT IN (SELECT film_id FROM Likes Where user_id = ?))";
+
+        List<Film> recommendationFilms = jdbcTemplate.query(getRecommendationFilms,
+                new FilmMapper(), id, id, id);
+
+        FilmRepositoryImpl film = new FilmRepositoryImpl(jdbcTemplate);
+
+        for(Film next: recommendationFilms){
+            next.setGenres(film.getAllFilmsGenres(next.getId()));
+        }
+
+        return recommendationFilms;
+    }
 
     @Override
     public User createUser(User user) {
