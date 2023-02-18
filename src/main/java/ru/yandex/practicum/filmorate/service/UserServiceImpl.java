@@ -79,4 +79,6 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteFriend(id, friendId);
         log.info("User " + id + " deleted user " + friendId + "from friends");
     }
+
+
 }

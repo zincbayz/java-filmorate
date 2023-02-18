@@ -115,17 +115,15 @@ public class FilmRepositoryImpl implements FilmRepository {
     }
 
     @Override
-    public void deleteFilmById(int id) {
-        Film film = getFilm(id);
-        //удаление отзывов!!!!!!!!!!!
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        String sql = "SELECT f.*, M.* " +
+                "FROM LIKES " +
+                "JOIN LIKES l ON l.FILM_ID = LIKES.FILM_ID " +
+                "JOIN FILMS f on f.film_id = l.film_id " +
+                "JOIN MPA M on f.mpa_id = M.MPA_ID " +
+                "WHERE l.USER_ID = ? AND LIKES.USER_ID = ?";
 
-        String deleteQuery = "DELETE FROM likes WHERE film_id=?";
-        jdbcTemplate.update(deleteQuery, id);
-
-        final String genresSqlQuery = "DELETE FROM film_genre WHERE FILM_ID = ?";
-        jdbcTemplate.update(genresSqlQuery, id);
-        final String sqlQuery = "DELETE FROM films WHERE FILM_ID = ?";
-        jdbcTemplate.update(sqlQuery, id);
+        return jdbcTemplate.query(sql, new FilmMapper(), userId, friendId);
     }
 
     private int insertFilm(Film film) {

@@ -59,11 +59,6 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public void deleteFilmById(int id) {
-        filmRepository.deleteFilmById(id);
-    }
-
-    @Override
     public void like(int filmId, int userId) {
         filmRepository.like(filmId, userId);
         log.info("User " + userId + " has liked film " + filmId);
@@ -104,5 +99,12 @@ public class FilmServiceImpl implements FilmService {
             throw new RequiredObjectWasNotFound("Not Valid mpaId");
         }
         return filmRepository.getMpaById(mpaId);
+    }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        log.info("Список общих фильмов отправлен");
+        List<Film> films = filmRepository.getCommonFilms(userId, friendId);
+        return films;
     }
 }

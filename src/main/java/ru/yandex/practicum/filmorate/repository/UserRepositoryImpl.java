@@ -81,7 +81,6 @@ public class UserRepositoryImpl implements UserRepository {
     public void deleteFriend(int id, int friendId) {
         jdbcTemplate.update("DELETE FROM Friends WHERE user_id=? AND friend_id=?", id, friendId);
         jdbcTemplate.update("DELETE FROM Friends WHERE user_id=? AND friend_id=?", friendId, id);
-
     }
 
     private void isRecordedUser(int id) {

@@ -64,8 +64,6 @@ public class UsersController {
         userServiceImpl.deleteFriend(id, friendId);
     }
 
-
-
     private User buildUser(User user) {
         return User.builder()
                 .id(user.getId())
