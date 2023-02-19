@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.exception_handler.exceptions.InternalServer
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.ValidationException;
 
+
 @Slf4j
 @RestControllerAdvice
 public class ExceptionApiHandler {

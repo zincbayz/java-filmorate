@@ -6,6 +6,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.ValidationException;
+import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.model.user.User;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
@@ -40,6 +41,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getUsersFriends(int id) {
         return userRepository.getUsersFriends(id);
+    }
+
+    public List<Film> getRecommendations(int id) {
+        return userRepository.getRecommendations(id);
     }
 
     @Override

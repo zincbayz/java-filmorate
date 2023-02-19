@@ -232,7 +232,14 @@ public class FilmRepositoryImpl implements FilmRepository {
         return film;
     }
 
-    private void updateFilmsGenre(Film film, int filmId) {
+    List<Genre> getAllFilmsGenres(int filmId) {
+        final String genresQuery =
+                "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id WHERE film_id = ?";
+        List<Genre> filmGenres = jdbcTemplate.query(genresQuery, new GenreMapper(), filmId);
+        return filmGenres;
+    }
+
+    private Film updateFilmsGenre(Film film, int filmId) {
         if (film.getGenres() != null && film.getGenres().isEmpty()) {
             deleteGenre(filmId);
         } else {
