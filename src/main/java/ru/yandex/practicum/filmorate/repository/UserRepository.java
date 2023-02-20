@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.repository;
 
+import ru.yandex.practicum.filmorate.model.user.Feed;
 import ru.yandex.practicum.filmorate.model.user.User;
 
 import java.util.List;
@@ -21,4 +22,8 @@ public interface UserRepository {
 
     void deleteFriend(int id, int friendId);
 
+    /**
+     * Возвращает ленту событий пользователя.
+     * */
+    List<Feed> findFeedByIdUser(int id);
 }

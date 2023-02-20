@@ -20,10 +20,12 @@ import java.util.stream.Collectors;
 public class FilmRepositoryImpl implements FilmRepository {
     private static final String ALL_FILMS_SQL_QUERY = "SELECT * FROM Films JOIN Mpa ON Films.mpa_id=Mpa.mpa_id ";
     private final JdbcTemplate jdbcTemplate;
+    FeedRepository feedRepository;
 
     @Autowired
-    public FilmRepositoryImpl(JdbcTemplate jdbcTemplate) {
+    public FilmRepositoryImpl(JdbcTemplate jdbcTemplate, FeedRepository feedRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.feedRepository = feedRepository;
     }
 
     public Film getFilm(int id) throws EmptyResultDataAccessException {
@@ -81,11 +83,15 @@ public class FilmRepositoryImpl implements FilmRepository {
 
     @Override
     public void like(int filmId, int userId) {
+        // В фид добавляется лайк
+        FeedRepository.createFeedEntity(userId, filmId, "LIKE", "ADD");
         jdbcTemplate.update("INSERT INTO Likes(film_id, user_id) VALUES (?, ?)", filmId, userId);
     }
 
-    public int deleteLike(int filmId, long userId) {
+    public int deleteLike(int filmId, int userId) {
         String deleteQuery = "DELETE FROM Likes WHERE EXISTS(SELECT 1 FROM LIKES WHERE film_id=? AND user_id=?)";
+        // из фида удаляется лайк
+        FeedRepository.createFeedEntity(userId, filmId, "LIKE", "REMOVE");
         return jdbcTemplate.update(deleteQuery, filmId, userId);
     }
 
