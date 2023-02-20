@@ -20,7 +20,7 @@ public interface FilmRepository {
 
     void like(int filmId, int userId);
 
-    int deleteLike(int filmId, long userId);
+    int deleteLike(int filmId, int userId);
 
     List<Genre> getGenres();
 

@@ -4,6 +4,7 @@ package ru.yandex.practicum.filmorate.controllers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.user.Feed;
 import ru.yandex.practicum.filmorate.model.user.User;
 import ru.yandex.practicum.filmorate.service.UserServiceImpl;
 
@@ -64,7 +65,14 @@ public class UsersController {
         userServiceImpl.deleteFriend(id, friendId);
     }
 
-
+    /**
+     * Возвращает ленту событий пользователя.
+     **/
+    @GetMapping("/{id}/feed")
+    public static List<Feed> findFeedByIdUser(@PathVariable int id) {
+        log.info("Подбираем ленту пользователя с id {}", id);
+        return UserServiceImpl.findFeedByIdUser(id);
+    }
 
     private User buildUser(User user) {
         return User.builder()

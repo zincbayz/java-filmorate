@@ -6,9 +6,12 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception_handler.RequiredObjectWasNotFound;
+import ru.yandex.practicum.filmorate.model.user.Feed;
 import ru.yandex.practicum.filmorate.model.user.User;
 import ru.yandex.practicum.filmorate.Util.UserMapper;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 @Slf4j
 @Component
@@ -90,5 +93,24 @@ public class UserRepositoryImpl implements UserRepository {
         } catch (EmptyResultDataAccessException e) {
             throw new RequiredObjectWasNotFound("User not found");
         }
+    }
+
+    /**
+     * Возвращает ленту событий пользователя.
+     */
+    @Override
+    public List<Feed> findFeedByIdUser(int id) {
+        String sql = "SELECT * FROM FEED WHERE USER_ID=?";
+
+        log.info("Получили ленту пользователя с id {}", id);
+        return jdbcTemplate.query(sql, (rs, rowNum) -> makeFeed(rs), id);
+    }
+
+    private Feed makeFeed(ResultSet rs) throws SQLException {
+        Feed feed = new Feed(rs.getInt("EVENT_ID"), rs.getInt("USER_ID"), rs.getInt("ENTITY_ID"), rs.getString("EVENT_TYPE"), rs.getString("OPERATION"), rs.getLong("CREATE_TIME"));
+        if (feed == null) {
+            return null;
+        }
+        return feed;
     }
 }
