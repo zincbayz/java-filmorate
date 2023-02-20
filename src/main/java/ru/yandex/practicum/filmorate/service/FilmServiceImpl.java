@@ -141,12 +141,18 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public List<Film> getSortedDirectorFilmsByYear(int directorId) {
+    public List<Film> getSortedDirectorFilmsByYear(int directorId) throws EntityNotFoundExeption {
+        if (!filmRepository.isDirectorExist(directorId)) {
+            throw new EntityNotFoundExeption("Нет режиссера c ID:" + directorId);
+        };
         return filmRepository.getSortedDirectorFilmsByYear(directorId);
     }
 
     @Override
-    public List<Film> getSortedDirectorFilmsByLikes(int directorId) {
+    public List<Film> getSortedDirectorFilmsByLikes(int directorId) throws EntityNotFoundExeption {
+        if (!filmRepository.isDirectorExist(directorId)) {
+            throw new EntityNotFoundExeption("Нет режиссера c ID:" + directorId);
+        };
         return filmRepository.getSortedDirectorFilmsByLikes(directorId);
     }
 

@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.service.FilmServiceImpl;
 import javax.validation.Valid;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Locale;
 
 
 @RestController
@@ -42,7 +43,7 @@ public class FilmsController {
     }
 
     @GetMapping("/director/{directorId}")
-    public List<Film> getSortedDirectorFilms(@PathVariable int directorId, @RequestParam String sortBy) throws InvalidParameterException {
+    public List<Film> getSortedDirectorFilms(@PathVariable int directorId, @RequestParam String sortBy) throws InvalidParameterException, EntityNotFoundExeption {
         if (sortBy.equals("year")) {
             return filmServiceImpl.getSortedDirectorFilmsByYear(directorId);
 
@@ -98,10 +99,13 @@ public class FilmsController {
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "by", defaultValue = "", required = false) List<String> by) throws InvalidParameterException {
 
+        query = query.toLowerCase();
+
         if ( query==null || query.isBlank()) {
             return filmServiceImpl.searchFilms();
         }
         if ( by.size() == 1 && (by.get(0).equals("director") || by.get(0).equals("title")) ||
+                (by.size() == 2 && (by.get(0).equals("title") && by.get(1).equals("director"))) ||
                 (by.size() == 2 && (by.get(0).equals("director") && by.get(1).equals("title")))) {
             return filmServiceImpl.searchFilms(query, by);
         }

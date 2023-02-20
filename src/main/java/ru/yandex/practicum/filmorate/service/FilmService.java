@@ -37,7 +37,7 @@ public interface FilmService {
 
     List<Film> searchFilms(String query, List<String> by);
 
-    List<Film> getSortedDirectorFilmsByYear(int directorId);
+    List<Film> getSortedDirectorFilmsByYear(int directorId) throws EntityNotFoundExeption;
 
-    List<Film> getSortedDirectorFilmsByLikes(int directorId);
+    List<Film> getSortedDirectorFilmsByLikes(int directorId) throws EntityNotFoundExeption;
 }

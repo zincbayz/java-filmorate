@@ -297,7 +297,7 @@ public class FilmRepositoryImpl implements FilmRepository {
                 "INNER JOIN MPA m ON f.mpa_id = m.mpa_id  " +
                 "INNER JOIN FILM_DIRECTOR fd ON f.FILM_ID  = fd.FILM_ID " +
                 "INNER JOIN DIRECTORS d ON fd.DIRECTOR_ID = d.DIRECTOR_ID " +
-                "WHERE DIRECTOR_NAME LIKE ?";
+                "WHERE LOWER(DIRECTOR_NAME) LIKE ?";
         List<Film> searchFilms = addGenresInFilm(jdbcTemplate.query(sql, new FilmMapper(), new String[] {"%" + query + "%"}));
         return addDirectorToAllFilms(searchFilms);
     }
@@ -307,27 +307,30 @@ public class FilmRepositoryImpl implements FilmRepository {
         final String sql = "SELECT * " +
                 "FROM FILMS f " +
                 "INNER JOIN MPA m ON f.mpa_id = m.mpa_id " +
-                "WHERE name LIKE ?";
+                "WHERE LOWER(NAME) LIKE ?";
         List<Film> searchFilms = addGenresInFilm(jdbcTemplate.query(sql, new FilmMapper(), new String[] {"%" + query + "%"}));
         return addDirectorToAllFilms(searchFilms);
     }
 
     @Override
     public List<Film> searchFilmsByDirectorAndTitle(String query) {
-        final String sql = "SELECT f.FILM_ID, f.NAME, f.DESCRIPTION, f.RELEASEDATE, f.DURATION, f.MPA_ID, m.mpa_name " +
+        final String sql = "SELECT f.FILM_ID, f.NAME, f.DESCRIPTION, f.RELEASEDATE, f.DURATION, f.RATE, f.MPA_ID, m.mpa_name  " +
+                "FROM FILMS f " +
+                "INNER JOIN MPA m ON f.mpa_id = m.mpa_id " +
+                " WHERE  LOWER(NAME) LIKE ? " +
+                "UNION " +
+                "SELECT f.FILM_ID, f.NAME, f.DESCRIPTION, f.RELEASEDATE, f.DURATION, f.RATE, f.MPA_ID, m.mpa_name " +
                 "FROM FILMS f " +
                 "INNER JOIN MPA m ON f.mpa_id = m.mpa_id  " +
                 "INNER JOIN FILM_DIRECTOR fd ON f.FILM_ID  = fd.FILM_ID " +
                 "INNER JOIN DIRECTORS d ON fd.DIRECTOR_ID = d.DIRECTOR_ID  " +
-                "WHERE DIRECTOR_NAME LIKE ? " +
-                "UNION " +
-                "SELECT f.FILM_ID, f.NAME, f.DESCRIPTION, f.RELEASEDATE, f.DURATION, f.MPA_ID, m.mpa_name  " +
-                "FROM FILMS f " +
-                "INNER JOIN MPA m ON f.mpa_id = m.mpa_id " +
-                " WHERE NAME LIKE ?";
+                "WHERE LOWER(DIRECTOR_NAME) LIKE ? " +
+                "ORDER BY RATE;";
         List<Film> searchFilms = addGenresInFilm(jdbcTemplate.query(sql, new FilmMapper(), new String[] {"%" + query + "%","%" + query + "%"}));
         return addDirectorToAllFilms(searchFilms);
     }
+
+
 
     @Override
     public boolean isUserExist(int userId) {
@@ -375,7 +378,7 @@ public class FilmRepositoryImpl implements FilmRepository {
                 "INNER JOIN MPA m ON f.mpa_id = m.mpa_id  " +
                 "INNER JOIN FILM_DIRECTOR fd ON f.FILM_ID  = fd.FILM_ID " +
                 "INNER JOIN DIRECTORS d ON fd.DIRECTOR_ID = d.DIRECTOR_ID " +
-                "WHERE DIRECTOR_ID = ?" +
+                "WHERE fd.DIRECTOR_ID = ?" +
                 "ORDER BY RELEASEDATE";
         List<Film> searchFilms = addGenresInFilm(jdbcTemplate.query(sql, new FilmMapper(), directorId));
         return addDirectorToAllFilms(searchFilms);
@@ -388,10 +391,23 @@ public class FilmRepositoryImpl implements FilmRepository {
                 "INNER JOIN MPA m ON f.mpa_id = m.mpa_id  " +
                 "INNER JOIN FILM_DIRECTOR fd ON f.FILM_ID  = fd.FILM_ID " +
                 "INNER JOIN DIRECTORS d ON fd.DIRECTOR_ID = d.DIRECTOR_ID " +
-                "WHERE DIRECTOR_ID = ?" +
-                "ORDER BY RATE";
+                "WHERE fd.DIRECTOR_ID = ?" +
+                "ORDER BY RATE DESC";
         List<Film> searchFilms = addGenresInFilm(jdbcTemplate.query(sql, new FilmMapper(), directorId));
         return addDirectorToAllFilms(searchFilms);
+    }
+
+    @Override
+    public boolean isDirectorExist(int directorId) {
+        String sqlQuery = "SELECT 1 FROM DIRECTORS WHERE director_id=?";
+        return Boolean.TRUE.equals(jdbcTemplate.query(sqlQuery,
+                (ResultSet rs) -> {
+                    if (rs.next()) {
+                        return true;
+                    }
+                    return false;
+                }, directorId
+        ));
     }
 
     private void insertFilmsGenres(Film film, int filmId) {

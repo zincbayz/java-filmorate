@@ -49,4 +49,6 @@ public interface FilmRepository {
     List<Film> getSortedDirectorFilmsByYear(int directorId);
 
     List<Film> getSortedDirectorFilmsByLikes(int directorId);
+
+    boolean isDirectorExist(int directorId);
 }
