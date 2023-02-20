@@ -5,12 +5,13 @@ import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.model.film.Genre;
 import ru.yandex.practicum.filmorate.model.film.Mpa;
 
+import java.sql.SQLException;
 import java.util.List;
 
 public interface FilmRepository {
-    int createFilm(Film film);
+    Film createFilm(Film film) throws SQLException;
 
-    Film update(Film film, int id);
+    Film update(Film film, int id) throws SQLException;
 
     List<Film> getAllFilms();
 
@@ -39,4 +40,13 @@ public interface FilmRepository {
     List<Film> searchFilmsByTitle(String query);
     List<Film> searchFilmsByDirectorAndTitle(String query);
 
+    boolean isUserExist(int userId);
+
+    boolean isFilmExist(int filmId);
+
+    boolean isLikeExist(int filmId, int userId);
+
+    List<Film> getSortedDirectorFilmsByYear(int directorId);
+
+    List<Film> getSortedDirectorFilmsByLikes(int directorId);
 }

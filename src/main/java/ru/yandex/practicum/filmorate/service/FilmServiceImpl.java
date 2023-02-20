@@ -5,11 +5,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception_handler.exeptions.EntityAllreadyExistExeption;
+import ru.yandex.practicum.filmorate.exception_handler.exeptions.EntityNotFoundExeption;
 import ru.yandex.practicum.filmorate.exception_handler.exeptions.RequiredObjectWasNotFound;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.repository.FilmRepository;
 import ru.yandex.practicum.filmorate.model.film.Genre;
 import ru.yandex.practicum.filmorate.model.film.Mpa;
+
+import java.sql.SQLException;
 import java.util.List;
 
 @Slf4j
@@ -45,9 +49,8 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public Film create(Film film) {
-        int filmId = filmRepository.createFilm(film);
-        return getFilm(filmId);
+    public Film create(Film film) throws SQLException {
+        return filmRepository.createFilm(film);
     }
 
     @Override
@@ -56,20 +59,37 @@ public class FilmServiceImpl implements FilmService {
             return filmRepository.update(film, id);
         } catch (EmptyResultDataAccessException e) {
             throw new RequiredObjectWasNotFound("Film id " + id);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void like(int filmId, int userId) {
+    public void like(int filmId, int userId) throws EntityAllreadyExistExeption, EntityNotFoundExeption {
+        if (!filmRepository.isUserExist(userId)) {
+            throw new EntityNotFoundExeption("Нет пользователя c ID:" + userId);
+        };
+        if (!filmRepository.isFilmExist(filmId)) {
+            throw new EntityNotFoundExeption("Нет фильма c ID:" + filmId);
+        };
+        if (filmRepository.isLikeExist(filmId, userId)) {
+            throw new EntityAllreadyExistExeption("Пользователь с ID: " + filmId + " уже добавлял лайк фильму с ID: " + filmId);
+        }
         filmRepository.like(filmId, userId);
         log.info("User " + userId + " has liked film " + filmId);
     }
 
     @Override
-    public void deleteLike(int filmId, long userId) {
+    public void deleteLike(int filmId, int userId) throws EntityNotFoundExeption {
+        if (!filmRepository.isUserExist(userId)) {
+            throw new EntityNotFoundExeption("Нет пользователя c ID:" + userId);
+        };
+        if (!filmRepository.isFilmExist(filmId)) {
+            throw new EntityNotFoundExeption("Нет фильма c ID:" + filmId);
+        };
         int deletedRow = filmRepository.deleteLike(filmId, userId);
         if (deletedRow == 0) {
-            throw new RequiredObjectWasNotFound("Film id " + filmId + " User id " + userId);
+            throw new EntityNotFoundExeption("Нет лайка фильма с id: " + filmId + " от пользователя с id: " + userId);
         }
         log.info("User " + userId + " remove like from film " + filmId);
     }
@@ -80,12 +100,11 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public Genre getGenreById(int genreId) {
+    public Genre getGenreById(int genreId) throws EntityNotFoundExeption {
         try {
-
             return filmRepository.getGenreById(genreId);
         } catch (EmptyResultDataAccessException e) {
-            throw new RequiredObjectWasNotFound("Genre not found");
+            throw new EntityNotFoundExeption("Жанр с id: " + genreId + " не найден.");
         }
     }
 
@@ -121,14 +140,31 @@ public class FilmServiceImpl implements FilmService {
         return filmRepository.searchFilmsByDirectorAndTitle(query);
     }
 
+    @Override
+    public List<Film> getSortedDirectorFilmsByYear(int directorId) {
+        return filmRepository.getSortedDirectorFilmsByYear(directorId);
+    }
+
+    @Override
+    public List<Film> getSortedDirectorFilmsByLikes(int directorId) {
+        return filmRepository.getSortedDirectorFilmsByLikes(directorId);
+    }
+
     public List<Film> getSortedDirectorFilms(int directorId, String sortBy) {
         directorService.isDirectorExist(directorId);
         String sortRequest;
         if("likes".equals(sortBy)) {
-            sortRequest = "SELECT *, (SELECT COUNT(user_id) FROM Likes GROUP BY film_id) AS likes FROM Films " +
-                    "JOIN Mpa ON Films.mpa_id=Mpa.mpa_id WHERE Films.director_id = ? ORDER BY likes DESC";
+            sortRequest = "SELECT * FROM Films f " +
+                    "JOIN Mpa m ON f.mpa_id = m.mpa_id " +
+                    "JOIN directors d ON f.film_id = d.director_id " +
+                    "WHERE director_id = 1 " +
+                    "ORDER BY rate";
         } else {
-            sortRequest = "SELECT * FROM Films JOIN Mpa ON Films.mpa_id=Mpa.mpa_id WHERE director_id = ? ORDER BY releaseDate";
+            sortRequest = "SELECT * FROM Films f " +
+                    "JOIN Mpa m ON f.mpa_id = m.mpa_id " +
+                    "JOIN directors d ON f.film_id = d.director_id " +
+                    "WHERE director_id = 1 " +
+                    "ORDER BY releaseDate";
         }
         return filmRepository.getSortedDirectorFilms(directorId, sortRequest);
     }

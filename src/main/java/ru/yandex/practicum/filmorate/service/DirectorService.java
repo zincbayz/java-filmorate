@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dto.DirectorDto;
 import ru.yandex.practicum.filmorate.exception_handler.exeptions.DirectorNotFound;
 import ru.yandex.practicum.filmorate.model.film.Director;
+import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.repository.DirectorRepository;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -63,4 +64,6 @@ public class DirectorService {
                 .map(review -> this.modelMapper.map(review, DirectorDto.class))
                 .collect(Collectors.toList());
     }
+
+
 }

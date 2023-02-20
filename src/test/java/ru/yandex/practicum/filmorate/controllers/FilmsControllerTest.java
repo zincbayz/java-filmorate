@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.yandex.practicum.filmorate.exception_handler.exeptions.InvalidParameterException;
 import ru.yandex.practicum.filmorate.service.FilmServiceImpl;
 import ru.yandex.practicum.filmorate.exception_handler.exeptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.film.Film;
@@ -128,7 +129,7 @@ class FilmsControllerTest {
     }
 
     @Test
-    void shouldReturnAllTopFilmsWithCountEqual2() {
+    void shouldReturnAllTopFilmsWithCountEqual2() throws InvalidParameterException {
         List<Film> allFilms = List.of(Film.builder()
                 .name("Kesha")
                 .description("1")
@@ -144,6 +145,6 @@ class FilmsControllerTest {
                         .build());
         when(filmServiceImpl.getPopularFilms(2)).thenReturn(allFilms);
         FilmsController filmsController = new FilmsController(filmServiceImpl);
-        assertEquals(allFilms, filmsController.getPopularFilms(String.valueOf(2)));
+        assertEquals(allFilms, filmsController.getPopularFilms(2));
     }
 }

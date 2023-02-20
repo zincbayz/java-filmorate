@@ -50,4 +50,23 @@ public class ExceptionApiHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorMessage(exception.getMessage()));
     }
+
+    @ExceptionHandler(EntityAllreadyExistExeption.class)
+    public ResponseEntity<ErrorMessage> EntityAllreadyExistExeption(EntityAllreadyExistExeption exception) {
+        log.error(exception.getMessage(), exception);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorMessage(exception.getMessage()));
+    }
+
+
+    @ExceptionHandler(EntityNotFoundExeption.class)
+    public ResponseEntity<ErrorMessage> EntityNotFoundExeption(EntityNotFoundExeption exception) {
+        log.error(exception.getMessage(), exception);
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorMessage(exception.getMessage()));
+    }
+
+
 }

@@ -2,10 +2,13 @@ package ru.yandex.practicum.filmorate.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception_handler.exeptions.EntityAllreadyExistExeption;
+import ru.yandex.practicum.filmorate.exception_handler.exeptions.EntityNotFoundExeption;
 import ru.yandex.practicum.filmorate.exception_handler.exeptions.InvalidParameterException;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.service.FilmServiceImpl;
 import javax.validation.Valid;
+import java.sql.SQLException;
 import java.util.List;
 
 
@@ -30,19 +33,32 @@ public class FilmsController {
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(required = false, defaultValue = "10") String count) {
-        return filmServiceImpl.getPopularFilms(Integer.parseInt(count));
+    public List<Film> getPopularFilms(
+            @RequestParam(value = "count", defaultValue = "10", required = false) Integer count) throws InvalidParameterException {
+        if (count <= 0) {
+            throw new InvalidParameterException("count должен быть целым числом больше 0, получено " + count);
+        }
+        return filmServiceImpl.getPopularFilms(count);
     }
 
     @GetMapping("/director/{directorId}")
-    public List<Film> getSortedDirectorFilms(@PathVariable int directorId, @RequestParam String sortBy) {
-        return filmServiceImpl.getSortedDirectorFilms(directorId, sortBy);
+    public List<Film> getSortedDirectorFilms(@PathVariable int directorId, @RequestParam String sortBy) throws InvalidParameterException {
+        if (sortBy.equals("year")) {
+            return filmServiceImpl.getSortedDirectorFilmsByYear(directorId);
+
+        }
+        else if (sortBy.equals("likes")) {
+            return filmServiceImpl.getSortedDirectorFilmsByLikes(directorId);
+        }
+        else {
+            throw new InvalidParameterException("Неверно задан тип поиска ( " + sortBy + ")");
+        }
+
     }
 
 
-
     @PostMapping
-    public Film createFilm(@Valid @RequestBody Film film) {
+    public Film createFilm(@Valid @RequestBody Film film) throws SQLException {
         return filmServiceImpl.create(buildFilm(film));
     }
 
@@ -52,13 +68,14 @@ public class FilmsController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public void like(@PathVariable("id") int filmId, @PathVariable int userId) {
+    public void like(@PathVariable("id") int filmId, @PathVariable int userId) throws EntityAllreadyExistExeption, EntityNotFoundExeption {
         filmServiceImpl.like(filmId, userId);
     }
 
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void deleteLike(@PathVariable("id") int filmId, @PathVariable int userId) {
+    public void deleteLike(@PathVariable("id") int filmId, @PathVariable int userId) throws EntityNotFoundExeption {
+
         filmServiceImpl.deleteLike(filmId, userId);
     }
 
@@ -69,6 +86,7 @@ public class FilmsController {
                 .description(film.getDescription())
                 .releaseDate(film.getReleaseDate())
                 .duration(film.getDuration())
+                .rate(film.getRate())
                 .mpa(film.getMpa())
                 .genres(film.getGenres())
                 .directors(film.getDirectors())

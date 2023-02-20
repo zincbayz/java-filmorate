@@ -18,14 +18,13 @@ public class FilmMapper implements RowMapper<Film> {
         mpa.setId(rs.getInt("mpa_id"));
         mpa.setName(rs.getString("mpa_name"));
 
-
-
         return Film.builder()
                 .id(rs.getInt("film_id"))
                 .name(rs.getString("name"))
                 .description(rs.getString("description"))
                 .releaseDate(rs.getDate("releaseDate").toLocalDate())
                 .duration(rs.getInt("duration"))
+                .rate(rs.getInt("rate"))
                 .mpa(mpa)
                 .build();
     }

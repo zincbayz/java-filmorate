@@ -43,6 +43,8 @@ public class Film {
     @Builder.Default
     private List<Director> directors = new ArrayList<>();
 
+
+
     public static class FilmBuilder {
         private LocalDate releaseDate;
         public FilmBuilder releaseDate(LocalDate releaseDate) {
@@ -53,14 +55,5 @@ public class Film {
             }
             return this;
         }
-
-//        private Director director;
-//
-//        public FilmBuilder director(Director director) {
-//            if(director == null) {
-//                this.director = new Director();
-//            }
-//            return this;
-//        }
     }
 }
