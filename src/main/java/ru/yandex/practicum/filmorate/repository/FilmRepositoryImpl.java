@@ -39,17 +39,6 @@ public class FilmRepositoryImpl implements FilmRepository {
         return film;
     }
 
-    private List<Director> getDirectors(int id) {
-        String directorId = jdbcTemplate.queryForObject("SELECT director_id FROM Films WHERE film_id=?",
-                new Object[]{id}, String.class);
-        if(directorId != null) {
-            Director director = jdbcTemplate.queryForObject("SELECT * FROM Directors WHERE director_id=?",
-                    new DirectorMapper(), directorId);
-            return Collections.singletonList(director);
-        }
-        return Collections.emptyList();
-    }
-
     @Override
     public List<Film> getAllFilms() {
         List<Film> filmsWithoutGenres = jdbcTemplate.query(ALL_FILMS_SQL_QUERY, new FilmMapper());
@@ -59,7 +48,7 @@ public class FilmRepositoryImpl implements FilmRepository {
     }
 
     private List<Film> addDirectorToAllFilms(List<Film> filmsWithGenres) {
-        final String genreQuery = "SELECT film_id, Films.director_id, director_name FROM Films JOIN Directors ON Films.director_id=Directors.director_id";
+        final String genreQuery = "SELECT film_id, DIRECTORS.director_id, DIRECTORS.director_name FROM FILM_DIRECTOR JOIN Directors ON FILM_DIRECTOR.director_id=Directors.director_id";
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(genreQuery);
 
         for (Film film : filmsWithGenres) {
@@ -72,7 +61,7 @@ public class FilmRepositoryImpl implements FilmRepository {
                         return director;
                     })
                     .collect(Collectors.toList());
-            film.setDirectors(directors);
+            film.getDirectors().addAll(directors);
         }
         return filmsWithGenres;
     }
@@ -177,9 +166,16 @@ public class FilmRepositoryImpl implements FilmRepository {
         return addDirectorToAllFilms(sortedFilmsWithGenres);
     }
 
+    private List<Director> getDirectors(int filmId) {
+        return jdbcTemplate.query("SELECT * FROM FILM_DIRECTOR " +
+                        "Join Directors ON FILM_DIRECTOR.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID " +
+                        "WHERE film_id=? AND DIRECTORS.DIRECTOR_ID IS NOT NULL",
+                new DirectorMapper(), filmId);
+    }
+
     @Override
     public void insertDirectorToFilm(int filmId, int directorId) {
-        jdbcTemplate.update("UPDATE Films SET director_id = ? WHERE film_id = ?", directorId, filmId);
+        jdbcTemplate.update("INSERT INTO Film_Director (film_id, director_id) VALUES (?, ?)", filmId, directorId);
     }
 
     private void insertFilmsGenres(Film film, int filmId) {
@@ -207,7 +203,7 @@ public class FilmRepositoryImpl implements FilmRepository {
         }
     }
 
-    private List<Genre> getAllFilmsGenres(int filmId) {
+     List<Genre> getAllFilmsGenres(int filmId) {
         final String genresQuery =
                 "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id WHERE film_id = ?";
         return jdbcTemplate.query(genresQuery, new GenreMapper(), filmId);
@@ -227,19 +223,13 @@ public class FilmRepositoryImpl implements FilmRepository {
             insertDirectorToFilm(filmId, film.getDirectors().get(0).getId());
             film.setDirectors(getDirectors(filmId));
         } else {
-            jdbcTemplate.update("UPDATE Films SET director_id = null WHERE film_id = ?", filmId);
+            jdbcTemplate.update("UPDATE FILM_DIRECTOR SET director_id = null WHERE film_id = ?", filmId);
         }
         return film;
     }
 
-    List<Genre> getAllFilmsGenres(int filmId) {
-        final String genresQuery =
-                "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id WHERE film_id = ?";
-        List<Genre> filmGenres = jdbcTemplate.query(genresQuery, new GenreMapper(), filmId);
-        return filmGenres;
-    }
 
-    private Film updateFilmsGenre(Film film, int filmId) {
+    private void updateFilmsGenre(Film film, int filmId) {
         if (film.getGenres() != null && film.getGenres().isEmpty()) {
             deleteGenre(filmId);
         } else {

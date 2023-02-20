@@ -109,9 +109,12 @@ public class FilmServiceImpl implements FilmService {
         String sortRequest;
         if("likes".equals(sortBy)) {
             sortRequest = "SELECT *, (SELECT COUNT(user_id) FROM Likes GROUP BY film_id) AS likes FROM Films " +
-                    "JOIN Mpa ON Films.mpa_id=Mpa.mpa_id WHERE Films.director_id = ? ORDER BY likes DESC";
+                    "JOIN Mpa ON Films.mpa_id=Mpa.mpa_id " +
+                    "JOIN Film_Director ON Films.film_id=Film_Director.film_id " +
+                    "WHERE director_id = ? ORDER BY likes DESC";
         } else {
-            sortRequest = "SELECT * FROM Films JOIN Mpa ON Films.mpa_id=Mpa.mpa_id WHERE director_id = ? ORDER BY releaseDate";
+            sortRequest = "SELECT * FROM Films JOIN Mpa ON Films.mpa_id=Mpa.mpa_id JOIN Film_Director ON " +
+                    "Films.film_id=Film_Director.film_id WHERE director_id = ? ORDER BY releaseDate";
         }
         return filmRepository.getSortedDirectorFilms(directorId, sortRequest);
     }
