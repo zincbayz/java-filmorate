@@ -37,6 +37,11 @@ public class FilmsController {
     public List<Film> getCommonFilms(@RequestParam int userId, @RequestParam int friendId) {
         return filmServiceImpl.getCommonFilms(userId, friendId);
     }
+    
+    @GetMapping("/director/{directorId}")
+    public List<Film> getSortedDirectorFilms(@PathVariable int directorId, @RequestParam String sortBy) {
+        return filmServiceImpl.getSortedDirectorFilms(directorId, sortBy);
+    }
 
     @PostMapping
     public Film createFilm(@Valid @RequestBody Film film) {
@@ -68,6 +73,7 @@ public class FilmsController {
                 .duration(film.getDuration())
                 .mpa(film.getMpa())
                 .genres(film.getGenres())
+                .directors(film.getDirectors())
                 .build();
     }
 }
