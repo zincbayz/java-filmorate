@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.Util.FilmMapper;
 import ru.yandex.practicum.filmorate.Util.GenreMapper;
 import ru.yandex.practicum.filmorate.Util.MpaMapper;
 import ru.yandex.practicum.filmorate.model.film.*;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,6 +75,19 @@ public class FilmRepositoryImpl implements FilmRepository {
         log.info("Film updated: " + film.getName());
 
         return updateFilmsGenre(film, filmId);
+    }
+
+    public boolean isFilmExist(int filmId) {
+        String sql = "SELECT COUNT(*) FROM Films where film_id=?";
+
+        int count = jdbcTemplate.queryForObject(sql,
+                new Object[] { filmId }, Integer.class);
+
+        if (count >= 1)
+        {
+            return true;
+        }
+        return false;
     }
 
 
@@ -192,4 +204,6 @@ public class FilmRepositoryImpl implements FilmRepository {
         }
         return films;
     }
+
+
 }
