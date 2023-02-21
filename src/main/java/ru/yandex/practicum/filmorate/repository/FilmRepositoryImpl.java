@@ -77,7 +77,7 @@ public class FilmRepositoryImpl implements FilmRepository {
             if (countTopFilms == 10) {
                 popularFilms.addAll(additionalFilms);
             } else {
-                for (int i = 1; i <= countTopFilms; i++) {
+                for (int i = 0; i <= (countTopFilms - 1); i++) {
                     popularFilms.add(additionalFilms.get(i));
                 }
             }
