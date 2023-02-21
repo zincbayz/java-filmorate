@@ -16,6 +16,8 @@ public interface FilmRepository {
 
     List<Film> getPopularFilms(int count);
 
+    List<Film> getMostPopulars(int limit, int genreId, int year);
+
     Film getFilm(int id);
 
     void like(int filmId, int userId);

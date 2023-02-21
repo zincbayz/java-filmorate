@@ -27,10 +27,21 @@ public class FilmsController {
     public List<Film> getAllFilms() {
         return filmServiceImpl.getAllFilms();
     }
+//
+//    @GetMapping("/popular")
+//    public List<Film> getPopularFilms(@RequestParam(required = false, defaultValue = "10") String count) {
+//        return filmServiceImpl.getPopularFilms(Integer.parseInt(count));
+//    }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(required = false, defaultValue = "10") String count) {
-        return filmServiceImpl.getPopularFilms(Integer.parseInt(count));
+    public List<Film> getPopularFilms(@RequestParam(required = false, defaultValue = "10") String count,
+                                      @RequestParam(required = false, defaultValue = "0") String genreId,
+                                      @RequestParam(required = false, defaultValue = "0") String year) {
+
+        if (Integer.parseInt(genreId) != 0 | Integer.parseInt(year) != 0) {
+            return filmServiceImpl.getMostPopulars(Integer.parseInt(count),
+                    Integer.parseInt(genreId), Integer.parseInt(year));
+        } else return filmServiceImpl.getPopularFilms(Integer.parseInt(count));
     }
 
     @GetMapping("/director/{directorId}")

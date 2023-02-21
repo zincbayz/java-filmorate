@@ -13,6 +13,8 @@ public interface FilmService {
 
     List<Film> getPopularFilms(int countTopFilms);
 
+    List<Film> getMostPopulars(int limit, int genreId, int year);
+
     Film create(Film film);
 
     public Film update(Film film, int id);

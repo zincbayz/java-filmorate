@@ -79,6 +79,30 @@ public class FilmRepositoryImpl implements FilmRepository {
         return popularFilms;
     }
 
+    @Override
+    public List<Film> getMostPopulars(int limit, int genreId, int year) {
+        String getMostPopularsQuery = ALL_FILMS_SQL_QUERY;
+        if (genreId != 0 & year == 0) {
+            getMostPopularsQuery += "WHERE film_id IN (SELECT film_id FROM Film_Genre WHERE genre_id = ?)";
+            List<Film> mostPopularFilms = jdbcTemplate.query(getMostPopularsQuery, new FilmMapper(), genreId);
+            return addGenresInFilm(mostPopularFilms);
+        } else if (genreId == 0 & year != 0) {
+            String startYear = year + "-01-01";
+            String endYear = year + "-12-31";
+            getMostPopularsQuery += "WHERE releaseDate BETWEEN DATE '" + startYear + "' AND DATE '" + endYear + "'";
+            List<Film> mostPopularFilms = jdbcTemplate.query(getMostPopularsQuery, new FilmMapper());
+            return addGenresInFilm(mostPopularFilms);
+        } else {
+            String startYear = year + "-01-01";
+            String endYear = year + "-12-31";
+            getMostPopularsQuery +=
+                    "WHERE film_id IN (SELECT film_id FROM Film_Genre WHERE genre_id = ?) " +
+                            "AND " + "releaseDate BETWEEN DATE '" + startYear + "' AND DATE '" + endYear + "'";
+
+            List<Film> mostPopularFilms = jdbcTemplate.query(getMostPopularsQuery, new FilmMapper(), genreId);
+            return addGenresInFilm(mostPopularFilms);
+        }
+    }
 
     @Override
     public int createFilm(Film film) {

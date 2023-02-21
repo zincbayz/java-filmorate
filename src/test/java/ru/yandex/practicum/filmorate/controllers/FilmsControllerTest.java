@@ -144,6 +144,6 @@ class FilmsControllerTest {
                         .build());
         when(filmServiceImpl.getPopularFilms(2)).thenReturn(allFilms);
         FilmsController filmsController = new FilmsController(filmServiceImpl);
-        assertEquals(allFilms, filmsController.getPopularFilms(String.valueOf(2)));
+        assertEquals(allFilms, filmsController.getPopularFilms(String.valueOf(2), String.valueOf(0), String.valueOf(0)));
     }
 }
