@@ -44,6 +44,11 @@ public class FilmServiceImpl implements FilmService {
         return filmRepository.getPopularFilms(countTopFilms);
     }
 
+    @Override
+    public List<Film> getMostPopulars(int limit, int genreId, int year) {
+        return filmRepository.getMostPopulars(limit, genreId, year);
+    }
+
 
     @Override
     public Film create(Film film) {
@@ -58,6 +63,11 @@ public class FilmServiceImpl implements FilmService {
         } catch (EmptyResultDataAccessException e) {
             throw new RequiredObjectWasNotFound("Film id " + id);
         }
+    }
+
+    @Override
+    public void deleteFilmById(int id) {
+        filmRepository.deleteFilmById(id);
     }
 
     @Override
@@ -101,6 +111,25 @@ public class FilmServiceImpl implements FilmService {
             throw new RequiredObjectWasNotFound("Not Valid mpaId");
         }
         return filmRepository.getMpaById(mpaId);
+    }
+
+    @Override
+    public List<Film> searchFilms() {
+        return filmRepository.searchFilms();
+    }
+
+    @Override
+    public List<Film> searchFilms(String query, List<String> by) {
+
+        if (by.size() == 1) {
+            if (by.get(0).equals("director")) {
+                return filmRepository.searchFilmsByDirector(query);
+            }
+            if (by.get(0).equals("title")) {
+                return filmRepository.searchFilmsByTitle(query);
+            }
+        }
+        return filmRepository.searchFilmsByDirectorAndTitle(query);
     }
 
     @Override

@@ -126,24 +126,4 @@ class FilmsControllerTest {
                 )
                 .andExpect(status().isOk());
     }
-
-    @Test
-    void shouldReturnAllTopFilmsWithCountEqual2() {
-        List<Film> allFilms = List.of(Film.builder()
-                .name("Kesha")
-                .description("1")
-                .releaseDate(LocalDate.of(2002,2,23))
-                .duration(10)
-                .build(),
-
-                Film.builder()
-                        .name("Kesha2")
-                        .description("12")
-                        .releaseDate(LocalDate.of(2002,2,23))
-                        .duration(100)
-                        .build());
-        when(filmServiceImpl.getPopularFilms(2)).thenReturn(allFilms);
-        FilmsController filmsController = new FilmsController(filmServiceImpl);
-        assertEquals(allFilms, filmsController.getPopularFilms(String.valueOf(2)));
-    }
 }

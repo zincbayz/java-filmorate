@@ -46,25 +46,6 @@ public class FilmRepositoryImpl implements FilmRepository {
         return addDirectorToAllFilms(filmsWithGenres);
     }
 
-    private List<Film> addDirectorToAllFilms(List<Film> filmsWithGenres) {
-        final String genreQuery = "SELECT film_id, DIRECTORS.director_id, DIRECTORS.director_name FROM FILM_DIRECTOR JOIN Directors ON FILM_DIRECTOR.director_id=Directors.director_id";
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList(genreQuery);
-
-        for (Film film : filmsWithGenres) {
-            List<Director> directors = rows.stream()
-                    .filter(stringObjectMap -> (int) stringObjectMap.get("FILM_ID") == film.getId())
-                    .map(stringObjectMap -> {
-                        Director director = new Director();
-                        director.setId((Integer) stringObjectMap.get("DIRECTOR_ID"));
-                        director.setName((String) stringObjectMap.get("DIRECTOR_NAME"));
-                        return director;
-                    })
-                    .collect(Collectors.toList());
-            film.getDirectors().addAll(directors);
-        }
-        return filmsWithGenres;
-    }
-
     @Override
     public List<Film> getPopularFilms(int countTopFilms) {
         final String getTopFilmsQuery = ALL_FILMS_SQL_QUERY +
@@ -79,6 +60,43 @@ public class FilmRepositoryImpl implements FilmRepository {
         return popularFilms;
     }
 
+    @Override
+    public List<Film> getMostPopulars(int limit, int genreId, int year) {
+        String getMostPopularsQuery = ALL_FILMS_SQL_QUERY;
+        if (genreId != 0 & year == 0) {
+            getMostPopularsQuery += "WHERE film_id IN (SELECT film_id FROM Film_Genre WHERE genre_id = ?)";
+            List<Film> mostPopularFilms = jdbcTemplate.query(getMostPopularsQuery, new FilmMapper(), genreId);
+            return addGenresInFilm(mostPopularFilms);
+        } else if (genreId == 0 & year != 0) {
+            String startYear = year + "-01-01";
+            String endYear = year + "-12-31";
+            getMostPopularsQuery += "WHERE releaseDate BETWEEN DATE '" + startYear + "' AND DATE '" + endYear + "'";
+            List<Film> mostPopularFilms = jdbcTemplate.query(getMostPopularsQuery, new FilmMapper());
+            return addGenresInFilm(mostPopularFilms);
+        } else {
+            String startYear = year + "-01-01";
+            String endYear = year + "-12-31";
+            getMostPopularsQuery +=
+                    "WHERE film_id IN (SELECT film_id FROM Film_Genre WHERE genre_id = ?) " +
+                            "AND " + "releaseDate BETWEEN DATE '" + startYear + "' AND DATE '" + endYear + "'";
+
+            List<Film> mostPopularFilms = jdbcTemplate.query(getMostPopularsQuery, new FilmMapper(), genreId);
+            return addGenresInFilm(mostPopularFilms);
+        }
+    }
+
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        String sql = "SELECT f.*, M.* " +
+                "FROM LIKES " +
+                "JOIN LIKES l ON l.FILM_ID = LIKES.FILM_ID " +
+                "JOIN FILMS f on f.film_id = l.film_id " +
+                "JOIN MPA M on f.mpa_id = M.MPA_ID " +
+                "WHERE l.USER_ID = ? AND LIKES.USER_ID = ?";
+
+        return jdbcTemplate.query(sql, new FilmMapper(), userId, friendId);
+    }
 
     @Override
     public int createFilm(Film film) {
@@ -94,20 +112,6 @@ public class FilmRepositoryImpl implements FilmRepository {
         return filmId;
     }
 
-    private int insertFilm(Film film) {
-        final String insertSql = "INSERT INTO Films(name, description, releaseDate, duration, mpa_id) " +
-                "VALUES (?, ?, ?, ?, ?)";
-
-        jdbcTemplate.update(insertSql,
-                film.getName(),
-                film.getDescription(),
-                film.getReleaseDate(),
-                film.getDuration(),
-                film.getMpa().getId());
-
-        return getInsertedFilmId();
-    }
-
     @Override
     public Film update(Film film, int filmId) {
         final String updateQuery = "UPDATE Films SET name=?, description=?, releaseDate=?, duration=?, mpa_id=? WHERE film_id=?";
@@ -119,6 +123,20 @@ public class FilmRepositoryImpl implements FilmRepository {
         Film filmWithDirector = updateFilmDirector(film, filmId);
         updateFilmsGenre(filmWithDirector, filmId);
         return getFilm(filmId);
+    }
+
+    @Override
+    public void deleteFilmById(int id) {
+        Film film = getFilm(id);
+        //удаление отзывов!!!!!!!!!!!
+
+        String deleteQuery = "DELETE FROM likes WHERE film_id=?";
+        jdbcTemplate.update(deleteQuery, id);
+
+        final String genresSqlQuery = "DELETE FROM film_genre WHERE FILM_ID = ?";
+        jdbcTemplate.update(genresSqlQuery, id);
+        final String sqlQuery = "DELETE FROM films WHERE FILM_ID = ?";
+        jdbcTemplate.update(sqlQuery, id);
     }
 
     public boolean isFilmExist(int filmId) {
@@ -170,31 +188,56 @@ public class FilmRepositoryImpl implements FilmRepository {
     }
 
     @Override
-    public List<Film> getCommonFilms(int userId, int friendId) {
-        String sql = "SELECT f.*, M.* " +
-                "FROM LIKES " +
-                "JOIN LIKES l ON l.FILM_ID = LIKES.FILM_ID " +
-                "JOIN FILMS f on f.film_id = l.film_id " +
-                "JOIN MPA M on f.mpa_id = M.MPA_ID " +
-                "WHERE l.USER_ID = ? AND LIKES.USER_ID = ?";
-
-        return jdbcTemplate.query(sql, new FilmMapper(), userId, friendId);
+    public List<Film> searchFilms() {
+        final String sql = "SELECT * " +
+                "FROM FILMS f " +
+                "INNER JOIN MPA m ON f.mpa_id = m.mpa_id " +
+                "WHERE f.film_id IN " +
+                "(SELECT film_id FROM LIKES GROUP BY film_id ORDER BY COUNT(user_id) DESC) ";
+        List<Film> searchFilms = addGenresInFilm(jdbcTemplate.query(sql, new FilmMapper()));
+        return addDirectorToAllFilms(searchFilms);
     }
 
-    private int insertFilm(Film film) {
-        final String insertSql = "INSERT INTO Films(name, description, releaseDate, duration, mpa_id) " +
-                "VALUES (?, ?, ?, ?, ?)";
-
-        jdbcTemplate.update(insertSql,
-                film.getName(),
-                film.getDescription(),
-                film.getReleaseDate(),
-                film.getDuration(),
-                film.getMpa().getId());
-
-        return getInsertedFilmId();
+    @Override
+    public List<Film> searchFilmsByDirector(String query) {
+        final String sql = "SELECT * " +
+                "FROM FILMS f " +
+                "INNER JOIN MPA m ON f.mpa_id = m.mpa_id  " +
+                "INNER JOIN FILM_DIRECTOR fd ON f.FILM_ID  = fd.FILM_ID " +
+                "INNER JOIN DIRECTORS d ON fd.DIRECTOR_ID = d.DIRECTOR_ID " +
+                "WHERE LOWER(DIRECTOR_NAME) LIKE ?";
+        List<Film> searchFilms = addGenresInFilm(jdbcTemplate.query(sql, new FilmMapper(), new String[] {"%" + query + "%"}));
+        return addDirectorToAllFilms(searchFilms);
     }
-    
+
+    @Override
+    public List<Film> searchFilmsByTitle(String query) {
+        final String sql = "SELECT * " +
+                "FROM FILMS f " +
+                "INNER JOIN MPA m ON f.mpa_id = m.mpa_id " +
+                "WHERE LOWER(NAME) LIKE ?";
+        List<Film> searchFilms = addGenresInFilm(jdbcTemplate.query(sql, new FilmMapper(), new String[] {"%" + query + "%"}));
+        return addDirectorToAllFilms(searchFilms);
+    }
+
+    @Override
+    public List<Film> searchFilmsByDirectorAndTitle(String query) {
+        final String sql = "SELECT f.FILM_ID, f.NAME, f.DESCRIPTION, f.RELEASEDATE, f.DURATION, f.RATE, f.MPA_ID, m.mpa_name  " +
+                "FROM FILMS f " +
+                "INNER JOIN MPA m ON f.mpa_id = m.mpa_id " +
+                " WHERE  LOWER(NAME) LIKE ? " +
+                "UNION " +
+                "SELECT f.FILM_ID, f.NAME, f.DESCRIPTION, f.RELEASEDATE, f.DURATION, f.RATE, f.MPA_ID, m.mpa_name " +
+                "FROM FILMS f " +
+                "INNER JOIN MPA m ON f.mpa_id = m.mpa_id  " +
+                "INNER JOIN FILM_DIRECTOR fd ON f.FILM_ID  = fd.FILM_ID " +
+                "INNER JOIN DIRECTORS d ON fd.DIRECTOR_ID = d.DIRECTOR_ID  " +
+                "WHERE LOWER(DIRECTOR_NAME) LIKE ? " +
+                "ORDER BY RATE;";
+        List<Film> searchFilms = addGenresInFilm(jdbcTemplate.query(sql, new FilmMapper(), new String[] {"%" + query + "%","%" + query + "%"}));
+        return addDirectorToAllFilms(searchFilms);
+    }
+
     @Override
     public List<Film> getSortedDirectorFilms(int directorId, String sqlQuery) {
         List<Film> sortedDirectorFilms = jdbcTemplate.query(sqlQuery,
@@ -204,16 +247,22 @@ public class FilmRepositoryImpl implements FilmRepository {
         return addDirectorToAllFilms(sortedFilmsWithGenres);
     }
 
+    @Override
+    public void insertDirectorToFilm(int filmId, int directorId) {
+        jdbcTemplate.update("INSERT INTO Film_Director (film_id, director_id) VALUES (?, ?)", filmId, directorId);
+    }
+
+    List<Genre> getAllFilmsGenres(int filmId) {
+        final String genresQuery =
+                "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id WHERE film_id = ?";
+        return jdbcTemplate.query(genresQuery, new GenreMapper(), filmId);
+    }
+
     private List<Director> getDirectors(int filmId) {
         return jdbcTemplate.query("SELECT * FROM FILM_DIRECTOR " +
                         "Join Directors ON FILM_DIRECTOR.DIRECTOR_ID = DIRECTORS.DIRECTOR_ID " +
                         "WHERE film_id=? AND DIRECTORS.DIRECTOR_ID IS NOT NULL",
                 new DirectorMapper(), filmId);
-    }
-
-    @Override
-    public void insertDirectorToFilm(int filmId, int directorId) {
-        jdbcTemplate.update("INSERT INTO Film_Director (film_id, director_id) VALUES (?, ?)", filmId, directorId);
     }
 
     private void insertFilmsGenres(Film film, int filmId) {
@@ -241,10 +290,37 @@ public class FilmRepositoryImpl implements FilmRepository {
         }
     }
 
-     List<Genre> getAllFilmsGenres(int filmId) {
-        final String genresQuery =
-                "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id WHERE film_id = ?";
-        return jdbcTemplate.query(genresQuery, new GenreMapper(), filmId);
+    private int insertFilm(Film film) {
+        final String insertSql = "INSERT INTO Films(name, description, releaseDate, duration, mpa_id) " +
+                "VALUES (?, ?, ?, ?, ?)";
+
+        jdbcTemplate.update(insertSql,
+                film.getName(),
+                film.getDescription(),
+                film.getReleaseDate(),
+                film.getDuration(),
+                film.getMpa().getId());
+
+        return getInsertedFilmId();
+    }
+
+    private List<Film> addDirectorToAllFilms(List<Film> filmsWithGenres) {
+        final String genreQuery = "SELECT film_id, DIRECTORS.director_id, DIRECTORS.director_name FROM FILM_DIRECTOR JOIN Directors ON FILM_DIRECTOR.director_id=Directors.director_id";
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(genreQuery);
+
+        for (Film film : filmsWithGenres) {
+            List<Director> directors = rows.stream()
+                    .filter(stringObjectMap -> (int) stringObjectMap.get("FILM_ID") == film.getId())
+                    .map(stringObjectMap -> {
+                        Director director = new Director();
+                        director.setId((Integer) stringObjectMap.get("DIRECTOR_ID"));
+                        director.setName((String) stringObjectMap.get("DIRECTOR_NAME"));
+                        return director;
+                    })
+                    .collect(Collectors.toList());
+            film.getDirectors().addAll(directors);
+        }
+        return filmsWithGenres;
     }
 
     private int getInsertedFilmId() {
@@ -298,6 +374,4 @@ public class FilmRepositoryImpl implements FilmRepository {
         }
         return films;
     }
-
-
 }

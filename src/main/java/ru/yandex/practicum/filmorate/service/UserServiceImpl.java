@@ -85,5 +85,4 @@ public class UserServiceImpl implements UserService {
         log.info("User " + id + " deleted user " + friendId + "from friends");
     }
 
-
 }
