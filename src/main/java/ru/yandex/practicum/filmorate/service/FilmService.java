@@ -29,5 +29,5 @@ public interface FilmService {
 
     Mpa getMpaById(int mpaId);
 
-
+    void deleteFilmById(int id);
 }

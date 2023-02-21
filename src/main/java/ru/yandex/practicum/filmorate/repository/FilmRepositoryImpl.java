@@ -74,7 +74,13 @@ public class FilmRepositoryImpl implements FilmRepository {
         if (popularFilms.size() < countTopFilms) {
             List<Film> additionalFilms = getAllFilms();
             popularFilms.removeAll(additionalFilms);
-            popularFilms.addAll(additionalFilms);
+            if (countTopFilms == 10) {
+                popularFilms.addAll(additionalFilms);
+            } else {
+                for (int i = 1; i <= countTopFilms; i++) {
+                    popularFilms.add(additionalFilms.get(i));
+                }
+            }
         }
         return popularFilms;
     }
@@ -119,6 +125,12 @@ public class FilmRepositoryImpl implements FilmRepository {
         Film filmWithDirector = updateFilmDirector(film, filmId);
         updateFilmsGenre(filmWithDirector, filmId);
         return getFilm(filmId);
+    }
+
+    @Override
+    public void deleteFilmById(int id) {
+        final String sqlQuery = "DELETE FROM films WHERE FILM_ID = ?";
+        jdbcTemplate.update(sqlQuery, id);
     }
 
     public boolean isFilmExist(int filmId) {

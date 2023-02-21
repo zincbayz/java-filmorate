@@ -33,4 +33,6 @@ public interface FilmRepository {
     List<Film> getSortedDirectorFilms(int directorId, String sortBy);
 
     void insertDirectorToFilm(int filmId, int directorId);
+
+    void deleteFilmById(int id);
 }

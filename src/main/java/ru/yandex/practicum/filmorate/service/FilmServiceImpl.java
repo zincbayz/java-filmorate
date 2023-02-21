@@ -104,6 +104,12 @@ public class FilmServiceImpl implements FilmService {
         return filmRepository.getMpaById(mpaId);
     }
 
+    @Override
+    public void deleteFilmById(int id) {
+        filmRepository.deleteFilmById(id);
+        log.info("Фильм с id {} удален", id);
+    }
+
     public List<Film> getSortedDirectorFilms(int directorId, String sortBy) {
         directorService.isDirectorExist(directorId);
         String sortRequest;
