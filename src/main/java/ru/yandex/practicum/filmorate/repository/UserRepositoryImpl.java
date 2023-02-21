@@ -5,8 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.Util.FilmMapper;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
+import ru.yandex.practicum.filmorate.Util.FilmMapper;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.model.user.User;
 import ru.yandex.practicum.filmorate.Util.UserMapper;
@@ -82,6 +82,19 @@ public class UserRepositoryImpl implements UserRepository {
 
         return jdbcTemplate.queryForObject("SELECT * FROM Users ORDER BY user_id DESC LIMIT 1",
                 new UserMapper());
+    }
+
+    public boolean isUserExist(int userId) {
+        String sql = "SELECT COUNT(*) FROM Users where user_id=?";
+
+        int count = jdbcTemplate.queryForObject(sql,
+                new Object[] { userId }, Integer.class);
+
+        if (count >= 1)
+        {
+            return true;
+        }
+        return false;
     }
 
     @Override

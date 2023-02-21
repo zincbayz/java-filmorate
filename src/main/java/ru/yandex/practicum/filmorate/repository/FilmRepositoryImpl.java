@@ -12,7 +12,6 @@ import ru.yandex.practicum.filmorate.Util.FilmMapper;
 import ru.yandex.practicum.filmorate.Util.GenreMapper;
 import ru.yandex.practicum.filmorate.Util.MpaMapper;
 import ru.yandex.practicum.filmorate.model.film.*;
-
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
@@ -120,6 +119,19 @@ public class FilmRepositoryImpl implements FilmRepository {
         Film filmWithDirector = updateFilmDirector(film, filmId);
         updateFilmsGenre(filmWithDirector, filmId);
         return getFilm(filmId);
+    }
+
+    public boolean isFilmExist(int filmId) {
+        String sql = "SELECT COUNT(*) FROM Films where film_id=?";
+
+        int count = jdbcTemplate.queryForObject(sql,
+                new Object[] { filmId }, Integer.class);
+
+        if (count >= 1)
+        {
+            return true;
+        }
+        return false;
     }
 
 
@@ -260,4 +272,6 @@ public class FilmRepositoryImpl implements FilmRepository {
         }
         return films;
     }
+
+
 }

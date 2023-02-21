@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.DirectorNotFound;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.InternalServerError;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
+import ru.yandex.practicum.filmorate.exception_handler.exceptions.ReviewNotFound;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.ValidationException;
-
 
 @Slf4j
 @RestControllerAdvice
@@ -41,6 +41,13 @@ public class ExceptionApiHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public @ResponseBody DirectorNotFound handleNotFound(DirectorNotFound e) {
         log.error("Director wasn't found: " + e.getMessage());
+         return(e);
+    }
+        
+    @ExceptionHandler({ReviewNotFound.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public @ResponseBody ReviewNotFound handleNotFound(ReviewNotFound e) {
+        log.error("Review wasn't found " + e.getMessage());
         return(e);
     }
 }
