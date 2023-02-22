@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS Films (
     description varchar,
     releaseDate date,
     duration    int,
-    rate       int,
+    rate       int DEFAULT (0),
     mpa_id      INTEGER REFERENCES Mpa (mpa_id)
 );
 

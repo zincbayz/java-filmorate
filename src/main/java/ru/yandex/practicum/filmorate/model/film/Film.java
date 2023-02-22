@@ -36,7 +36,8 @@ public class Film {
 
     @Positive
     private int duration;
-    private int rate;
+    @Builder.Default
+    private int rate = 0;
     private Mpa mpa;
     @Builder.Default
     private List<Genre> genres = new ArrayList<>();
