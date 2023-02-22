@@ -69,20 +69,19 @@ public class FilmRepositoryImpl implements FilmRepository {
     public List<Film> getPopularFilms(int countTopFilms) {
         final String getTopFilmsQuery = ALL_FILMS_SQL_QUERY +
                 "WHERE film_id IN (SELECT film_id FROM Likes GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?)";
-        List<Film> popularFilms = jdbcTemplate.query(getTopFilmsQuery, new FilmMapper(), countTopFilms);
-
-        if (popularFilms.size() < countTopFilms) {
+        List<Film> popularFilmsWithGenres = addGenresInFilm(jdbcTemplate.query(getTopFilmsQuery, new FilmMapper(), countTopFilms));
+        if (popularFilmsWithGenres.size() < countTopFilms) {
             List<Film> additionalFilms = getAllFilms();
-            popularFilms.removeAll(additionalFilms);
+            popularFilmsWithGenres.removeAll(additionalFilms);
             if (countTopFilms == 10) {
-                popularFilms.addAll(additionalFilms);
+                popularFilmsWithGenres.addAll(additionalFilms);
             } else {
                 for (int i = 0; i <= (countTopFilms - 1); i++) {
-                    popularFilms.add(additionalFilms.get(i));
+                    popularFilmsWithGenres.add(additionalFilms.get(i));
                 }
             }
         }
-        return popularFilms;
+        return addGenresInFilm(popularFilmsWithGenres);
     }
 
 
