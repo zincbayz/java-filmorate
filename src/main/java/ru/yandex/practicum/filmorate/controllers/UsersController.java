@@ -49,11 +49,7 @@ public class UsersController {
         return userServiceImpl.getRecommendations(id);
     }
 
-    /*@GetMapping("/{id}/feed")
-    public static List<Feed> findFeedByIdUser(@PathVariable int id) {
-        log.info("Подбираем ленту пользователя с id {}", id);
-        return UserServiceImpl.findFeedByIdUser(id);
-    }*/
+
 
 
     @PostMapping()
@@ -75,6 +71,11 @@ public class UsersController {
     @DeleteMapping("/{id}/friends/{friendId}")
     public void deleteFriend(@PathVariable int id, @PathVariable int friendId) {
         userServiceImpl.deleteFriend(id, friendId);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteUserById(@PathVariable int id) {
+        userServiceImpl.deleteUserById(id);
     }
 
     private User buildUser(User user) {

@@ -67,6 +67,7 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public void deleteFilmById(int id) {
         filmRepository.deleteFilmById(id);
+        log.info("Фильм с id {} удален", id);
     }
 
     @Override

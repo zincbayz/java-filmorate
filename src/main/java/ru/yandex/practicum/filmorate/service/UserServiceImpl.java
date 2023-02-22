@@ -85,4 +85,10 @@ public class UserServiceImpl implements UserService {
         log.info("User " + id + " deleted user " + friendId + "from friends");
     }
 
+    @Override
+    public void deleteUserById(int id) {
+        userRepository.deleteUserById(id);
+        log.info("Пользователь с id {} удален", id);
+    }
+
 }

@@ -37,6 +37,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public List<User> getUsersFriends(int id) {
+        isRecordedUser(id);
         final String sqlQuery = "SELECT * FROM USERS WHERE user_id IN (SELECT friend_id FROM Friends WHERE user_id=?)";
         return jdbcTemplate.query(sqlQuery, new UserMapper(), id);
     }
@@ -116,6 +117,12 @@ public class UserRepositoryImpl implements UserRepository {
     public void deleteFriend(int id, int friendId) {
         jdbcTemplate.update("DELETE FROM Friends WHERE user_id=? AND friend_id=?", id, friendId);
         jdbcTemplate.update("DELETE FROM Friends WHERE user_id=? AND friend_id=?", friendId, id);
+    }
+
+    @Override
+    public void deleteUserById(int id) {
+        final String sqlQuery = "DELETE FROM users WHERE USER_ID = ?";
+        jdbcTemplate.update(sqlQuery, id);
     }
 
     private void isRecordedUser(int id) {

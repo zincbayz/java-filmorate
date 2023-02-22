@@ -50,14 +50,19 @@ public class FilmRepositoryImpl implements FilmRepository {
     public List<Film> getPopularFilms(int countTopFilms) {
         final String getTopFilmsQuery = ALL_FILMS_SQL_QUERY +
                 "WHERE film_id IN (SELECT film_id FROM Likes GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?)";
-        List<Film> popularFilms = jdbcTemplate.query(getTopFilmsQuery, new FilmMapper(), countTopFilms);
-
-        if (popularFilms.size() < countTopFilms) {
+        List<Film> popularFilmsWithGenres = addGenresInFilm(jdbcTemplate.query(getTopFilmsQuery, new FilmMapper(), countTopFilms));
+        if (popularFilmsWithGenres.size() < countTopFilms) {
             List<Film> additionalFilms = getAllFilms();
-            popularFilms.removeAll(additionalFilms);
-            popularFilms.addAll(additionalFilms);
+            popularFilmsWithGenres.removeAll(additionalFilms);
+            if (countTopFilms == 10) {
+                popularFilmsWithGenres.addAll(additionalFilms);
+            } else {
+                for (int i = 0; i <= (countTopFilms - 1); i++) {
+                    popularFilmsWithGenres.add(additionalFilms.get(i));
+                }
+            }
         }
-        return popularFilms;
+        return addGenresInFilm(popularFilmsWithGenres);
     }
 
     @Override
@@ -154,12 +159,24 @@ public class FilmRepositoryImpl implements FilmRepository {
 
     @Override
     public void like(int filmId, int userId) {
-        jdbcTemplate.update("INSERT INTO Likes(film_id, user_id) VALUES (?, ?)", filmId, userId);
+        String likeQuery = "INSERT INTO Likes(film_id, user_id) VALUES (?, ?)";
+        increaseFilmRate(filmId);
+        jdbcTemplate.update(likeQuery, filmId, userId);
     }
 
     public int deleteLike(int filmId, long userId) {
         String deleteQuery = "DELETE FROM Likes WHERE EXISTS(SELECT 1 FROM LIKES WHERE film_id=? AND user_id=?)";
+        decreaseFilmRate(filmId);
         return jdbcTemplate.update(deleteQuery, filmId, userId);
+    }
+
+    public boolean increaseFilmRate(int filmId) {
+        String sqlQuery = "UPDATE FILMS SET rate = rate + 1 WHERE film_id=?";
+        return jdbcTemplate.update(sqlQuery, filmId) > 0;
+    }
+    public boolean decreaseFilmRate(int filmId) {
+        String sqlQuery = "UPDATE FILMS SET rate = rate - 1 WHERE film_id=?";
+        return jdbcTemplate.update(sqlQuery, filmId) > 0;
     }
 
 
@@ -232,7 +249,7 @@ public class FilmRepositoryImpl implements FilmRepository {
                 "INNER JOIN FILM_DIRECTOR fd ON f.FILM_ID  = fd.FILM_ID " +
                 "INNER JOIN DIRECTORS d ON fd.DIRECTOR_ID = d.DIRECTOR_ID  " +
                 "WHERE LOWER(DIRECTOR_NAME) LIKE ? " +
-                "ORDER BY RATE;";
+                "ORDER BY RATE DESC;";
         List<Film> searchFilms = addGenresInFilm(jdbcTemplate.query(sql, new FilmMapper(), new String[] {"%" + query + "%","%" + query + "%"}));
         return addDirectorToAllFilms(searchFilms);
     }

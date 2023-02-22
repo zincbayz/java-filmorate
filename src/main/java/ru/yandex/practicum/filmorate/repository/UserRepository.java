@@ -25,4 +25,5 @@ public interface UserRepository {
     void deleteFriend(int id, int friendId);
 
 
+    void deleteUserById(int id);
 }

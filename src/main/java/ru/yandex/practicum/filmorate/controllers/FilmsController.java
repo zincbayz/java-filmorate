@@ -106,6 +106,7 @@ public class FilmsController {
                 .duration(film.getDuration())
                 .mpa(film.getMpa())
                 .genres(film.getGenres())
+                .rate(film.getRate())
                 .directors(film.getDirectors())
                 .build();
     }
