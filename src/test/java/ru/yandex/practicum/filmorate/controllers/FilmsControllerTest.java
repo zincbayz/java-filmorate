@@ -126,7 +126,7 @@ class FilmsControllerTest {
                 )
                 .andExpect(status().isOk());
     }
-
+    
     @Test
     void shouldReturnAllTopFilmsWithCountEqual2() {
         List<Film> allFilms = List.of(Film.builder()

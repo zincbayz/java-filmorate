@@ -17,7 +17,9 @@ public interface FilmService {
 
     Film create(Film film);
 
-    public Film update(Film film, int id);
+    Film update(Film film, int id);
+
+    void deleteFilmById(int id);
 
     void like(int filmId, int userId);
 
@@ -30,6 +32,12 @@ public interface FilmService {
     List<Mpa> getMpaRatings();
 
     Mpa getMpaById(int mpaId);
+
+    List<Film> searchFilms();
+
+    List<Film> searchFilms(String query, List<String> by);
+
+    List<Film> getCommonFilms(int userId, int friendId);
 
 
 }

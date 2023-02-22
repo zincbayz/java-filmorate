@@ -32,7 +32,21 @@ public interface FilmRepository {
 
     Mpa getMpaById(int mpaId);
 
+    void deleteFilmById(int id);
+
+    List<Film> getCommonFilms(int userId, int friendId);
+
     List<Film> getSortedDirectorFilms(int directorId, String sortBy);
 
     void insertDirectorToFilm(int filmId, int directorId);
+
+    List<Film> getMostPopulars(int limit, int genreId, int year);
+
+    List<Film> searchFilms();
+
+    List<Film> searchFilmsByDirector(String query);
+
+    List<Film> searchFilmsByTitle(String query);
+
+    List<Film> searchFilmsByDirectorAndTitle(String query);
 }

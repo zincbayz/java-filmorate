@@ -64,6 +64,10 @@ public class FilmServiceImpl implements FilmService {
         }
     }
 
+    @Override
+    public void deleteFilmById(int id) {
+        filmRepository.deleteFilmById(id);
+    }
 
     @Override
     public void like(int filmId, int userId) {
@@ -108,6 +112,32 @@ public class FilmServiceImpl implements FilmService {
         return filmRepository.getMpaById(mpaId);
     }
 
+    @Override
+    public List<Film> searchFilms() {
+        return filmRepository.searchFilms();
+    }
+
+    @Override
+    public List<Film> searchFilms(String query, List<String> by) {
+
+        if (by.size() == 1) {
+            if (by.get(0).equals("director")) {
+                return filmRepository.searchFilmsByDirector(query);
+            }
+            if (by.get(0).equals("title")) {
+                return filmRepository.searchFilmsByTitle(query);
+            }
+        }
+        return filmRepository.searchFilmsByDirectorAndTitle(query);
+    }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        log.info("Список общих фильмов отправлен");
+        List<Film> films = filmRepository.getCommonFilms(userId, friendId);
+        return films;
+    }
+    
     public List<Film> getSortedDirectorFilms(int directorId, String sortBy) {
         directorService.isDirectorExist(directorId);
         String sortRequest;

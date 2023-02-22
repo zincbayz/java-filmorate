@@ -22,4 +22,5 @@ public interface UserService {
 
     void deleteFriend(int id, int friendId);
 
+
 }
