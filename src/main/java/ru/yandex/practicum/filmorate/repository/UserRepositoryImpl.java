@@ -89,10 +89,8 @@ public class UserRepositoryImpl implements UserRepository {
 
     public boolean isUserExist(int userId) {
         String sql = "SELECT COUNT(*) FROM Users where user_id=?";
-
         int count = jdbcTemplate.queryForObject(sql,
                 new Object[] { userId }, Integer.class);
-
         if (count >= 1)
         {
             return true;
