@@ -5,10 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.film.Film;
-import ru.yandex.practicum.filmorate.model.user.Feed;
 import ru.yandex.practicum.filmorate.model.user.User;
+import ru.yandex.practicum.filmorate.model.user.Feed;
 import ru.yandex.practicum.filmorate.service.UserServiceImpl;
-
 import javax.validation.Valid;
 import java.util.List;
 
@@ -47,6 +46,11 @@ public class UsersController {
     @GetMapping("/{id}/recommendations")
     public List<Film> getRecommendations(@PathVariable int id) {
         return userServiceImpl.getRecommendations(id);
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<Feed> getFeed(@PathVariable int id) {
+        return userServiceImpl.getFeed(id);
     }
 
 

@@ -23,7 +23,7 @@ public interface FilmService {
 
     void like(int filmId, int userId);
 
-    void deleteLike(int filmId, long userId);
+    void deleteLike(int filmId, int userId);
 
     List<Genre> getGenres();
 

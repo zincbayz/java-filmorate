@@ -5,9 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.Util.FeedMapper;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
 import ru.yandex.practicum.filmorate.Util.FilmMapper;
 import ru.yandex.practicum.filmorate.model.film.Film;
+import ru.yandex.practicum.filmorate.model.user.Feed;
 import ru.yandex.practicum.filmorate.model.user.User;
 import ru.yandex.practicum.filmorate.Util.UserMapper;
 
@@ -37,7 +39,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public List<User> getUsersFriends(int id) {
-        isRecordedUser(id);
+        isRecordedEntity(id);
         final String sqlQuery = "SELECT * FROM USERS WHERE user_id IN (SELECT friend_id FROM Friends WHERE user_id=?)";
         return jdbcTemplate.query(sqlQuery, new UserMapper(), id);
     }
@@ -109,7 +111,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public void addFriend(int id, int friendId) throws EmptyResultDataAccessException{
-        isRecordedUser(friendId);
+        isRecordedEntity(friendId);
         jdbcTemplate.update("INSERT INTO Friends (user_id, friend_id) VALUES (?, ?)", id, friendId);
     }
 
@@ -125,7 +127,25 @@ public class UserRepositoryImpl implements UserRepository {
         jdbcTemplate.update(sqlQuery, id);
     }
 
-    private void isRecordedUser(int id) {
+
+    @Override
+    public List<Feed> getFeed(int userId) {
+        isRecordedEntity(userId);
+        return jdbcTemplate.query("SELECT * FROM Feeds WHERE user_id=? " +
+                        "UNION " +
+                        "SELECT * FROM Feeds " +
+                        "WHERE user_id IN (SELECT friend_id FROM Friends WHERE user_id=?) AND event_type LIKE '%REVIEW%'",
+                new FeedMapper(),  userId, userId);
+    }
+
+    @Override
+    public void insertFeed(int userId, String eventType, String operation, int entityId) {
+        final String feedQuery = "INSERT INTO Feeds (user_id, event_type, operation, entity_id) VALUES (?, ?, ?, ?)";
+        jdbcTemplate.update(feedQuery,
+                userId, eventType, operation, entityId);
+    }
+
+    private void isRecordedEntity(int id) {
         try {
             getUser(id);
         } catch (EmptyResultDataAccessException e) {

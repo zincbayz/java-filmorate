@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.user.Feed;
+
 import java.util.List;
 
 
@@ -22,5 +24,4 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
     @Modifying
     @Query(value = "delete from Review_User where review_id=?1 and user_id=?2", nativeQuery = true)
     void deleteAssessment(int reviewId, int userId);
-
 }

@@ -131,14 +131,6 @@ public class FilmRepositoryImpl implements FilmRepository {
 
     @Override
     public void deleteFilmById(int id) {
-        Film film = getFilm(id);
-        //удаление отзывов!!!!!!!!!!!
-
-        String deleteQuery = "DELETE FROM likes WHERE film_id=?";
-        jdbcTemplate.update(deleteQuery, id);
-
-        final String genresSqlQuery = "DELETE FROM film_genre WHERE FILM_ID = ?";
-        jdbcTemplate.update(genresSqlQuery, id);
         final String sqlQuery = "DELETE FROM films WHERE FILM_ID = ?";
         jdbcTemplate.update(sqlQuery, id);
     }
@@ -159,12 +151,14 @@ public class FilmRepositoryImpl implements FilmRepository {
 
     @Override
     public void like(int filmId, int userId) {
-        String likeQuery = "INSERT INTO Likes(film_id, user_id) VALUES (?, ?)";
+        String likeQuery2 = "MERGE INTO Likes USING (SELECT CAST(? AS int) AS film_id, CAST(? AS int) AS user_id) AS TMP " +
+                "ON Likes.film_id=TMP.film_id AND Likes.user_id=TMP.user_id " +
+                "WHEN NOT MATCHED THEN INSERT VALUES(TMP.film_id, TMP.user_id)";
         increaseFilmRate(filmId);
-        jdbcTemplate.update(likeQuery, filmId, userId);
+        jdbcTemplate.update(likeQuery2, filmId, userId);
     }
-
-    public int deleteLike(int filmId, long userId) {
+    @Override
+    public int deleteLike(int filmId, int userId) {
         String deleteQuery = "DELETE FROM Likes WHERE EXISTS(SELECT 1 FROM LIKES WHERE film_id=? AND user_id=?)";
         decreaseFilmRate(filmId);
         return jdbcTemplate.update(deleteQuery, filmId, userId);

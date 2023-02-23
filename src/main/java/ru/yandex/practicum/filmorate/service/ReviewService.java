@@ -38,6 +38,7 @@ public class ReviewService {
         if(filmRepository.isFilmExist(reviewDto.getFilmId()) &&
                 userRepository.isUserExist(reviewDto.getUserId())) {
             Review review = repository.save(convertDtoToReview(reviewDto));
+            userRepository.insertFeed(review.getUserId(), "REVIEW", "ADD", review.getReviewId());
             return convertReviewToDto(review);
         } else {
             throw new RequiredObjectWasNotFound("User or Film not found");
@@ -52,11 +53,14 @@ public class ReviewService {
         review.setIsPositive(reviewDto.getIsPositive());
 
         Review updatedReview = repository.save(review);
+        userRepository.insertFeed(updatedReview.getUserId(), "REVIEW", "UPDATE", updatedReview.getReviewId());
         return convertReviewToDto(updatedReview);
     }
-
+    @Transactional
     public void deleteReview(int reviewId) {
         isReviewExist(reviewId);
+        Review review = repository.findByReviewId(reviewId);
+        userRepository.insertFeed(review.getUserId(), "REVIEW", "REMOVE", reviewId);
         repository.deleteById(reviewId);
     }
 

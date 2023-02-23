@@ -10,6 +10,8 @@ import ru.yandex.practicum.filmorate.repository.FilmRepository;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
 import ru.yandex.practicum.filmorate.model.film.Genre;
 import ru.yandex.practicum.filmorate.model.film.Mpa;
+import ru.yandex.practicum.filmorate.repository.UserRepository;
+
 import java.util.List;
 
 @Slf4j
@@ -19,10 +21,13 @@ public class FilmServiceImpl implements FilmService {
     private final FilmRepository filmRepository;
     private final DirectorService directorService;
 
+    private final UserRepository userRepository;
+
     @Autowired
-    public FilmServiceImpl(@Qualifier("filmRepositoryImpl") FilmRepository filmRepository, DirectorService directorService) {
+    public FilmServiceImpl(@Qualifier("filmRepositoryImpl") FilmRepository filmRepository, DirectorService directorService, UserRepository userRepository) {
         this.filmRepository = filmRepository;
         this.directorService = directorService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -73,15 +78,17 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public void like(int filmId, int userId) {
         filmRepository.like(filmId, userId);
+        userRepository.insertFeed(userId, "LIKE", "ADD", filmId);
         log.info("User " + userId + " has liked film " + filmId);
     }
 
     @Override
-    public void deleteLike(int filmId, long userId) {
+    public void deleteLike(int filmId, int userId) {
         int deletedRow = filmRepository.deleteLike(filmId, userId);
         if (deletedRow == 0) {
             throw new RequiredObjectWasNotFound("Film id " + filmId + " User id " + userId);
         }
+        userRepository.insertFeed(userId, "LIKE", "REMOVE", filmId);
         log.info("User " + userId + " remove like from film " + filmId);
     }
 
