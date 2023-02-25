@@ -1,14 +1,11 @@
-package ru.yandex.practicum.filmorate.Util;
+package ru.yandex.practicum.filmorate.util;
 
 import org.springframework.jdbc.core.RowMapper;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.model.film.Mpa;
-import ru.yandex.practicum.filmorate.model.user.User;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class FilmMapper implements RowMapper<Film> {
     @Override
@@ -25,6 +22,7 @@ public class FilmMapper implements RowMapper<Film> {
                 .description(rs.getString("description"))
                 .releaseDate(rs.getDate("releaseDate").toLocalDate())
                 .duration(rs.getInt("duration"))
+                .rate(rs.getInt("rate"))
                 .mpa(mpa)
                 .build();
     }

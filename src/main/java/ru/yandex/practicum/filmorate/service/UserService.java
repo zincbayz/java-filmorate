@@ -1,16 +1,8 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception_handler.RequiredObjectWasNotFound;
-import ru.yandex.practicum.filmorate.exception_handler.ValidationException;
+import ru.yandex.practicum.filmorate.model.user.Feed;
 import ru.yandex.practicum.filmorate.model.user.User;
-import ru.yandex.practicum.filmorate.repository.UserRepository;
 
-import java.util.Collections;
 import java.util.List;
 
 public interface UserService {
@@ -30,5 +22,8 @@ public interface UserService {
     void addFriend(int id, int friendId);
 
     void deleteFriend(int id, int friendId);
+    
+    void deleteUserById(int id);
 
+    List<Feed> getFeed(int id);
 }

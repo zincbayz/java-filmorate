@@ -5,10 +5,15 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.yandex.practicum.filmorate.exception_handler.ValidationException;
+import ru.yandex.practicum.filmorate.exception_handler.exceptions.InternalServerError;
+import ru.yandex.practicum.filmorate.model.user.Feed;
+import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.model.user.User;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
-import ru.yandex.practicum.filmorate.exception_handler.RequiredObjectWasNotFound;
+import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
+import ru.yandex.practicum.filmorate.util.enums.EventType;
+import ru.yandex.practicum.filmorate.util.enums.Operation;
+
 import java.util.*;
 
 @Slf4j
@@ -18,10 +23,9 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Autowired
-    public UserServiceImpl(@Qualifier("userRepositoryImpl") UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
-
 
     @Override
     public User getUser(int id) {
@@ -39,7 +43,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> getUsersFriends(int id) {
+        userRepository.isUserExist(id);
         return userRepository.getUsersFriends(id);
+    }
+
+    public List<Film> getRecommendations(int id) {
+        return userRepository.getRecommendations(id);
     }
 
     @Override
@@ -51,13 +60,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User create(User user) {
-        return userRepository.createUser(user);
+        return userRepository.createUser(buildUser(user));
     }
 
     @Override
     public User update(User user) {
         try {
-            return userRepository.update(user, user.getId());
+            return userRepository.update(buildUser(user), user.getId());
         } catch (EmptyResultDataAccessException e) {
             throw new RequiredObjectWasNotFound("User " + user.getId() + " not found");
         }
@@ -65,18 +74,41 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public void addFriend(int id, int friendId) {
+    public void addFriend(int userId, int friendId) {
         try {
-            userRepository.addFriend(id, friendId);
+            userRepository.isUserExist(friendId);
+            userRepository.addFriend(userId, friendId);
+            userRepository.insertFeed(userId, EventType.FRIEND, Operation.ADD, friendId);
         } catch (EmptyResultDataAccessException e) {
-            throw new ValidationException("User not found");
+            throw new InternalServerError("User not found");
         }
-        log.info("Users " + id + " and " + friendId + "have become friends");
+        log.info("Users " + userId + " and " + friendId + "have become friends");
     }
 
     @Override
-    public void deleteFriend(int id, int friendId) {
-        userRepository.deleteFriend(id, friendId);
-        log.info("User " + id + " deleted user " + friendId + "from friends");
+    public void deleteFriend(int userId, int friendId) {
+        userRepository.deleteFriend(userId, friendId);
+        userRepository.insertFeed(userId, EventType.FRIEND, Operation.REMOVE, friendId);
+        log.info("User " + userId + " deleted user " + friendId + "from friends");
+    }
+
+    @Override
+    public void deleteUserById(int userId) {
+        userRepository.deleteUserById(userId);
+        log.info("Пользователь с id {} удален", userId);
+    }
+
+    @Override
+    public List<Feed> getFeed(int userId) {
+        userRepository.isUserExist(userId);
+        return userRepository.getFeed(userId);
+    }
+
+    private User buildUser(User user) {
+        user.setLogin(user.getLogin().trim());
+        if (user.getName() == null || user.getName().isEmpty()) {
+            user.setName(user.getLogin());
+        }
+        return user;
     }
 }

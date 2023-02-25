@@ -4,9 +4,10 @@ package ru.yandex.practicum.filmorate.controllers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.model.user.User;
+import ru.yandex.practicum.filmorate.model.user.Feed;
 import ru.yandex.practicum.filmorate.service.UserServiceImpl;
-
 import javax.validation.Valid;
 import java.util.List;
 
@@ -42,15 +43,27 @@ public class UsersController {
         return userServiceImpl.getCommonFriends(id, otherId);
     }
 
+    @GetMapping("/{id}/recommendations")
+    public List<Film> getRecommendations(@PathVariable int id) {
+        return userServiceImpl.getRecommendations(id);
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<Feed> getFeed(@PathVariable int id) {
+        return userServiceImpl.getFeed(id);
+    }
+
+
+
 
     @PostMapping()
     public User createUser(@Valid @RequestBody User user) {
-        return userServiceImpl.create(buildUser(user));
+        return userServiceImpl.create(user);
     }
 
     @PutMapping()
     public User updateUser(@Valid @RequestBody User user) {
-        return userServiceImpl.update(buildUser(user));
+        return userServiceImpl.update(user);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
@@ -64,15 +77,8 @@ public class UsersController {
         userServiceImpl.deleteFriend(id, friendId);
     }
 
-
-
-    private User buildUser(User user) {
-        return User.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .login(user.getLogin())
-                .name(user.getName())
-                .birthday(user.getBirthday())
-                .build();
+    @DeleteMapping("/{id}")
+    public void deleteUserById(@PathVariable int id) {
+        userServiceImpl.deleteUserById(id);
     }
 }

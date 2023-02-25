@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.service.FilmServiceImpl;
 import javax.validation.Valid;
+import ru.yandex.practicum.filmorate.exception_handler.exceptions.InvalidParameterException;
+
 import java.util.List;
 
 
@@ -28,23 +30,46 @@ public class FilmsController {
         return filmServiceImpl.getAllFilms();
     }
 
-    @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(required = false, defaultValue = "10") String count) {
-        return filmServiceImpl.getPopularFilms(Integer.parseInt(count));
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(@RequestParam int userId, @RequestParam int friendId) {
+        return filmServiceImpl.getCommonFilms(userId, friendId);
+    }
+    
+    @GetMapping("/director/{directorId}")
+    public List<Film> getSortedDirectorFilms(@PathVariable int directorId, @RequestParam String sortBy) {
+        return filmServiceImpl.getSortedDirectorFilms(directorId, sortBy);
     }
 
+    @GetMapping("/popular")
+    public List<Film> getPopularFilms(@RequestParam(required = false, defaultValue = "10") String count,
+                                      @RequestParam(required = false, defaultValue = "0") String genreId,
+                                      @RequestParam(required = false, defaultValue = "0") String year) {
 
+        if (Integer.parseInt(genreId) != 0 | Integer.parseInt(year) != 0) {
+            return filmServiceImpl.getMostPopulars(Integer.parseInt(count),
+                    Integer.parseInt(genreId), Integer.parseInt(year));
+        } else return filmServiceImpl.getPopularFilms(Integer.parseInt(count));
+    }
 
-
+    @GetMapping("/search")
+    private List<Film> searchFilms(
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "by", defaultValue = "", required = false) List<String> by) {
+        if ( query==null || query.isBlank()) {
+            return filmServiceImpl.searchFilms();
+        } else {
+            return filmServiceImpl.searchFilms(query, by);
+        }
+    }
 
     @PostMapping
     public Film createFilm(@Valid @RequestBody Film film) {
-        return filmServiceImpl.create(buildFilm(film));
+        return filmServiceImpl.create(film);
     }
 
     @PutMapping()
     public Film updateFilm(@Valid @RequestBody Film film) {
-        return filmServiceImpl.update(buildFilm(film), film.getId());
+        return filmServiceImpl.update(film, film.getId());
     }
 
     @PutMapping("/{id}/like/{userId}")
@@ -58,15 +83,8 @@ public class FilmsController {
         filmServiceImpl.deleteLike(filmId, userId);
     }
 
-    private Film buildFilm(Film film) {
-        return Film.builder()
-                .id(film.getId())
-                .name(film.getName())
-                .description(film.getDescription())
-                .releaseDate(film.getReleaseDate())
-                .duration(film.getDuration())
-                .mpa(film.getMpa())
-                .genres(film.getGenres())
-                .build();
+    @DeleteMapping("/{id}")
+    public void deleteFilmById(@PathVariable int id) {
+        filmServiceImpl.deleteFilmById(id);
     }
 }

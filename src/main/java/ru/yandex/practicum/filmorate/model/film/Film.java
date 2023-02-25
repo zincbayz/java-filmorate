@@ -7,16 +7,14 @@ import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
-import ru.yandex.practicum.filmorate.exception_handler.ValidationException;
+import ru.yandex.practicum.filmorate.exception_handler.exceptions.ValidationException;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 
 @Data
@@ -38,10 +36,13 @@ public class Film {
 
     @Positive
     private int duration;
-
+    @Builder.Default
+    private int rate = 0;
     private Mpa mpa;
     @Builder.Default
     private List<Genre> genres = new ArrayList<>();
+    @Builder.Default
+    private List<Director> directors = new ArrayList<>();
 
     public static class FilmBuilder {
         private LocalDate releaseDate;

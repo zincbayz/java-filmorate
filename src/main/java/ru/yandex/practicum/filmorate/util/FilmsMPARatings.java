@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.Util;
+package ru.yandex.practicum.filmorate.util;
 
 public enum FilmsMPARatings {
 

@@ -1,15 +1,8 @@
 package ru.yandex.practicum.filmorate.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception_handler.RequiredObjectWasNotFound;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.model.film.Genre;
 import ru.yandex.practicum.filmorate.model.film.Mpa;
-import ru.yandex.practicum.filmorate.repository.FilmRepository;
 
 import java.util.List;
 
@@ -20,13 +13,17 @@ public interface FilmService {
 
     List<Film> getPopularFilms(int countTopFilms);
 
+    List<Film> getMostPopulars(int limit, int genreId, int year);
+
     Film create(Film film);
 
-    public Film update(Film film, int id);
+    Film update(Film film, int id);
+
+    void deleteFilmById(int id);
 
     void like(int filmId, int userId);
 
-    void deleteLike(int filmId, long userId);
+    void deleteLike(int filmId, int userId);
 
     List<Genre> getGenres();
 
@@ -35,6 +32,12 @@ public interface FilmService {
     List<Mpa> getMpaRatings();
 
     Mpa getMpaById(int mpaId);
+
+    List<Film> searchFilms();
+
+    List<Film> searchFilms(String query, List<String> by);
+
+    List<Film> getCommonFilms(int userId, int friendId);
 
 
 }
