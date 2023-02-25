@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.Util;
+package ru.yandex.practicum.filmorate.util;
 
 import org.springframework.jdbc.core.RowMapper;
 import ru.yandex.practicum.filmorate.model.film.Director;

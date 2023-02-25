@@ -54,31 +54,22 @@ public class FilmsController {
     @GetMapping("/search")
     private List<Film> searchFilms(
             @RequestParam(value = "query", required = false) String query,
-            @RequestParam(value = "by", defaultValue = "", required = false) List<String> by) throws InvalidParameterException {
-
-        query = query.toLowerCase();
-
+            @RequestParam(value = "by", defaultValue = "", required = false) List<String> by) {
         if ( query==null || query.isBlank()) {
             return filmServiceImpl.searchFilms();
-        }
-        if ( by.size() == 1 && (by.get(0).equals("director") || by.get(0).equals("title")) ||
-                (by.size() == 2 && (by.get(0).equals("title") && by.get(1).equals("director"))) ||
-                (by.size() == 2 && (by.get(0).equals("director") && by.get(1).equals("title")))) {
+        } else {
             return filmServiceImpl.searchFilms(query, by);
-        }
-        else {
-            throw new InvalidParameterException("Указаны неверные параметры запроса!");
         }
     }
 
     @PostMapping
     public Film createFilm(@Valid @RequestBody Film film) {
-        return filmServiceImpl.create(buildFilm(film));
+        return filmServiceImpl.create(film);
     }
 
     @PutMapping()
     public Film updateFilm(@Valid @RequestBody Film film) {
-        return filmServiceImpl.update(buildFilm(film), film.getId());
+        return filmServiceImpl.update(film, film.getId());
     }
 
     @PutMapping("/{id}/like/{userId}")
@@ -95,19 +86,5 @@ public class FilmsController {
     @DeleteMapping("/{id}")
     public void deleteFilmById(@PathVariable int id) {
         filmServiceImpl.deleteFilmById(id);
-    }
-
-    private Film buildFilm(Film film) {
-        return Film.builder()
-                .id(film.getId())
-                .name(film.getName())
-                .description(film.getDescription())
-                .releaseDate(film.getReleaseDate())
-                .duration(film.getDuration())
-                .mpa(film.getMpa())
-                .genres(film.getGenres())
-                .rate(film.getRate())
-                .directors(film.getDirectors())
-                .build();
     }
 }

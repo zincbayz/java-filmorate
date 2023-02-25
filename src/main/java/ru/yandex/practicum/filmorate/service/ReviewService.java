@@ -11,6 +11,8 @@ import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.repository.FilmRepositoryImpl;
 import ru.yandex.practicum.filmorate.repository.ReviewRepository;
 import ru.yandex.practicum.filmorate.repository.UserRepositoryImpl;
+import ru.yandex.practicum.filmorate.util.enums.EventType;
+import ru.yandex.practicum.filmorate.util.enums.Operation;
 
 import java.util.Comparator;
 import java.util.List;
@@ -35,14 +37,13 @@ public class ReviewService {
     }
 
     public ReviewDto addReview(ReviewDto reviewDto) {
-        if(filmRepository.isFilmExist(reviewDto.getFilmId()) &&
-                userRepository.isUserExist(reviewDto.getUserId())) {
-            Review review = repository.save(convertDtoToReview(reviewDto));
-            userRepository.insertFeed(review.getUserId(), "REVIEW", "ADD", review.getReviewId());
-            return convertReviewToDto(review);
-        } else {
-            throw new RequiredObjectWasNotFound("User or Film not found");
-        }
+        userRepository.isUserExist(reviewDto.getUserId());
+        filmRepository.isFilmExist(reviewDto.getFilmId());
+
+        Review review = repository.save(convertDtoToReview(reviewDto));
+        userRepository.insertFeed(review.getUserId(), EventType.REVIEW, Operation.ADD, review.getReviewId());
+        return convertReviewToDto(review);
+
     }
 
     public ReviewDto updateReview(ReviewDto reviewDto) {
@@ -53,14 +54,14 @@ public class ReviewService {
         review.setIsPositive(reviewDto.getIsPositive());
 
         Review updatedReview = repository.save(review);
-        userRepository.insertFeed(updatedReview.getUserId(), "REVIEW", "UPDATE", updatedReview.getReviewId());
+        userRepository.insertFeed(updatedReview.getUserId(), EventType.REVIEW, Operation.UPDATE, updatedReview.getReviewId());
         return convertReviewToDto(updatedReview);
     }
     @Transactional
     public void deleteReview(int reviewId) {
         isReviewExist(reviewId);
         Review review = repository.findByReviewId(reviewId);
-        userRepository.insertFeed(review.getUserId(), "REVIEW", "REMOVE", reviewId);
+        userRepository.insertFeed(review.getUserId(), EventType.REVIEW, Operation.REMOVE, reviewId);
         repository.deleteById(reviewId);
     }
 

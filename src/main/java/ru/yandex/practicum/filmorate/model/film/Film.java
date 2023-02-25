@@ -54,14 +54,5 @@ public class Film {
             }
             return this;
         }
-
-//        private Director director;
-//
-//        public FilmBuilder director(Director director) {
-//            if(director == null) {
-//                this.director = new Director();
-//            }
-//            return this;
-//        }
     }
 }

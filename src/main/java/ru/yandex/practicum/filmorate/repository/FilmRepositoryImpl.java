@@ -7,10 +7,11 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.Util.DirectorMapper;
-import ru.yandex.practicum.filmorate.Util.FilmMapper;
-import ru.yandex.practicum.filmorate.Util.GenreMapper;
-import ru.yandex.practicum.filmorate.Util.MpaMapper;
+import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
+import ru.yandex.practicum.filmorate.util.DirectorMapper;
+import ru.yandex.practicum.filmorate.util.FilmMapper;
+import ru.yandex.practicum.filmorate.util.GenreMapper;
+import ru.yandex.practicum.filmorate.util.MpaMapper;
 import ru.yandex.practicum.filmorate.model.film.*;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class FilmRepositoryImpl implements FilmRepository {
     private static final String ALL_FILMS_SQL_QUERY = "SELECT * FROM Films " +
             "JOIN Mpa ON Films.mpa_id=Mpa.mpa_id ";
+    private static final int FILM_DOESNT_EXIST = 0;
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -41,7 +43,6 @@ public class FilmRepositoryImpl implements FilmRepository {
     @Override
     public List<Film> getAllFilms() {
         List<Film> filmsWithoutGenres = jdbcTemplate.query(ALL_FILMS_SQL_QUERY, new FilmMapper());
-
         List<Film> filmsWithGenres = addGenresInFilm(filmsWithoutGenres);
         return addDirectorToAllFilms(filmsWithGenres);
     }
@@ -50,44 +51,31 @@ public class FilmRepositoryImpl implements FilmRepository {
     public List<Film> getPopularFilms(int countTopFilms) {
         final String getTopFilmsQuery = ALL_FILMS_SQL_QUERY +
                 "WHERE film_id IN (SELECT film_id FROM Likes GROUP BY film_id ORDER BY COUNT(user_id) DESC LIMIT ?)";
-        List<Film> popularFilmsWithGenres = addGenresInFilm(jdbcTemplate.query(getTopFilmsQuery, new FilmMapper(), countTopFilms));
-        if (popularFilmsWithGenres.size() < countTopFilms) {
-            List<Film> additionalFilms = getAllFilms();
-            popularFilmsWithGenres.removeAll(additionalFilms);
-            if (countTopFilms == 10) {
-                popularFilmsWithGenres.addAll(additionalFilms);
-            } else {
-                for (int i = 0; i <= (countTopFilms - 1); i++) {
-                    popularFilmsWithGenres.add(additionalFilms.get(i));
-                }
-            }
-        }
+        List<Film> popularFilmsWithGenres = jdbcTemplate.query(getTopFilmsQuery, new FilmMapper(), countTopFilms);
         return addGenresInFilm(popularFilmsWithGenres);
     }
 
     @Override
-    public List<Film> getMostPopulars(int limit, int genreId, int year) {
-        String getMostPopularsQuery = ALL_FILMS_SQL_QUERY;
-        if (genreId != 0 & year == 0) {
-            getMostPopularsQuery += "WHERE film_id IN (SELECT film_id FROM Film_Genre WHERE genre_id = ?)";
-            List<Film> mostPopularFilms = jdbcTemplate.query(getMostPopularsQuery, new FilmMapper(), genreId);
-            return addGenresInFilm(mostPopularFilms);
-        } else if (genreId == 0 & year != 0) {
-            String startYear = year + "-01-01";
-            String endYear = year + "-12-31";
-            getMostPopularsQuery += "WHERE releaseDate BETWEEN DATE '" + startYear + "' AND DATE '" + endYear + "'";
-            List<Film> mostPopularFilms = jdbcTemplate.query(getMostPopularsQuery, new FilmMapper());
-            return addGenresInFilm(mostPopularFilms);
-        } else {
-            String startYear = year + "-01-01";
-            String endYear = year + "-12-31";
-            getMostPopularsQuery +=
-                    "WHERE film_id IN (SELECT film_id FROM Film_Genre WHERE genre_id = ?) " +
-                            "AND " + "releaseDate BETWEEN DATE '" + startYear + "' AND DATE '" + endYear + "'";
-
-            List<Film> mostPopularFilms = jdbcTemplate.query(getMostPopularsQuery, new FilmMapper(), genreId);
-            return addGenresInFilm(mostPopularFilms);
-        }
+    public List<Film> getMostPopularsByYear(String startYear, String endYear, int limit) {
+        List<Film> mostPopularFilms = jdbcTemplate.query(ALL_FILMS_SQL_QUERY +
+                        "WHERE releaseDate BETWEEN DATE '" + startYear + "' AND DATE '" + endYear + "' LIMIT ?",
+                new FilmMapper(), limit);
+        return addGenresInFilm(mostPopularFilms);
+    }
+    @Override
+    public List<Film> getMostPopularsByGenre(int genreId, int limit) {
+        List<Film> mostPopularFilms = jdbcTemplate.query(ALL_FILMS_SQL_QUERY +
+                "WHERE film_id IN (SELECT film_id FROM Film_Genre WHERE genre_id = ? LIMIT ?)",
+                new FilmMapper(), genreId, limit);
+        return addGenresInFilm(mostPopularFilms);
+    }
+    @Override
+    public List<Film> getMostPopularsByYearAndGenre(int genreId, String startYear, String endYear, int limit) {
+        List<Film> mostPopularFilms = jdbcTemplate.query(ALL_FILMS_SQL_QUERY +
+                "WHERE film_id IN (SELECT film_id FROM Film_Genre WHERE genre_id = ?) " +
+                "AND releaseDate BETWEEN DATE '" + startYear + "' AND DATE '" + endYear + "' LIMIT ?",
+                new FilmMapper(), genreId, limit);
+        return addGenresInFilm(mostPopularFilms);
     }
 
     @Override
@@ -105,14 +93,9 @@ public class FilmRepositoryImpl implements FilmRepository {
     @Override
     public int createFilm(Film film) {
         int filmId = insertFilm(film);
-
+        insertDirectorToFilm(filmId, film.getDirectors());
+        insertFilmsGenres(film.getGenres(), filmId);
         log.info("Film added: " + film.getName());
-
-        if(film.getDirectors() != null) {
-            insertDirectorToFilm(filmId, film.getDirectors().get(0).getId());
-        }
-        insertFilmsGenres(film, filmId);
-
         return filmId;
     }
 
@@ -135,19 +118,6 @@ public class FilmRepositoryImpl implements FilmRepository {
         jdbcTemplate.update(sqlQuery, id);
     }
 
-    public boolean isFilmExist(int filmId) {
-        String sql = "SELECT COUNT(*) FROM Films where film_id=?";
-
-        int count = jdbcTemplate.queryForObject(sql,
-                new Object[] { filmId }, Integer.class);
-
-        if (count >= 1)
-        {
-            return true;
-        }
-        return false;
-    }
-
 
     @Override
     public void like(int filmId, int userId) {
@@ -157,22 +127,22 @@ public class FilmRepositoryImpl implements FilmRepository {
         increaseFilmRate(filmId);
         jdbcTemplate.update(likeQuery2, filmId, userId);
     }
+
     @Override
     public int deleteLike(int filmId, int userId) {
         String deleteQuery = "DELETE FROM Likes WHERE EXISTS(SELECT 1 FROM LIKES WHERE film_id=? AND user_id=?)";
         decreaseFilmRate(filmId);
         return jdbcTemplate.update(deleteQuery, filmId, userId);
     }
-
-    public boolean increaseFilmRate(int filmId) {
+    private void increaseFilmRate(int filmId) {
         String sqlQuery = "UPDATE FILMS SET rate = rate + 1 WHERE film_id=?";
-        return jdbcTemplate.update(sqlQuery, filmId) > 0;
-    }
-    public boolean decreaseFilmRate(int filmId) {
-        String sqlQuery = "UPDATE FILMS SET rate = rate - 1 WHERE film_id=?";
-        return jdbcTemplate.update(sqlQuery, filmId) > 0;
+        jdbcTemplate.update(sqlQuery, filmId);
     }
 
+    private void decreaseFilmRate(int filmId) {
+        String sqlQuery = "UPDATE FILMS SET rate = rate - 1 WHERE film_id=?";
+        jdbcTemplate.update(sqlQuery, filmId);
+    }
 
     @Override
     public List<Genre> getGenres() {
@@ -258,8 +228,10 @@ public class FilmRepositoryImpl implements FilmRepository {
     }
 
     @Override
-    public void insertDirectorToFilm(int filmId, int directorId) {
-        jdbcTemplate.update("INSERT INTO Film_Director (film_id, director_id) VALUES (?, ?)", filmId, directorId);
+    public void insertDirectorToFilm(int filmId, List<Director> directors) {
+        if(directors != null) {
+            jdbcTemplate.update("INSERT INTO Film_Director (film_id, director_id) VALUES (?, ?)", filmId, directors.get(0).getId());
+        }
     }
 
     List<Genre> getAllFilmsGenres(int filmId) {
@@ -275,17 +247,15 @@ public class FilmRepositoryImpl implements FilmRepository {
                 new DirectorMapper(), filmId);
     }
 
-    private void insertFilmsGenres(Film film, int filmId) {
-        final String insertGenres = "INSERT INTO Film_Genre VALUES(?, ?)";
-
-        if (film.getGenres() != null) {
-            List<Integer> genresId = film.getGenres().stream()
+    private void insertFilmsGenres(List<Genre> genres, int filmId) {
+        if (genres != null) {
+            List<Integer> genresId = genres.stream()
                     .map(Genre::getId)
                     .distinct()
                     .sorted()
                     .collect(Collectors.toList());
             deleteGenre(filmId);
-            jdbcTemplate.batchUpdate(insertGenres, new BatchPreparedStatementSetter() {
+            jdbcTemplate.batchUpdate("INSERT INTO Film_Genre VALUES(?, ?)", new BatchPreparedStatementSetter() {
                 @Override
                 public void setValues(PreparedStatement ps, int i) throws SQLException {
                     ps.setInt(1, filmId);
@@ -344,7 +314,7 @@ public class FilmRepositoryImpl implements FilmRepository {
 
     private Film updateFilmDirector(Film film, int filmId) {
         if(film.getDirectors() != null) {
-            insertDirectorToFilm(filmId, film.getDirectors().get(0).getId());
+            insertDirectorToFilm(filmId, film.getDirectors());
             film.setDirectors(getDirectors(filmId));
         } else {
             jdbcTemplate.update("UPDATE FILM_DIRECTOR SET director_id = null WHERE film_id = ?", filmId);
@@ -357,7 +327,7 @@ public class FilmRepositoryImpl implements FilmRepository {
         if (film.getGenres() != null && film.getGenres().isEmpty()) {
             deleteGenre(filmId);
         } else {
-            insertFilmsGenres(film, filmId);
+            insertFilmsGenres(film.getGenres(), filmId);
         }
     }
 
@@ -366,7 +336,7 @@ public class FilmRepositoryImpl implements FilmRepository {
         jdbcTemplate.update(deleteGenreQuery, filmId);
     }
 
-    private List<Film> addGenresInFilm(List<Film> films) {
+    List<Film> addGenresInFilm(List<Film> films) {
         final String genreQuery = "SELECT * FROM Film_Genre JOIN Genres ON Film_Genre.genre_id=Genres.genre_id";
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(genreQuery);
 
@@ -383,5 +353,13 @@ public class FilmRepositoryImpl implements FilmRepository {
             film.setGenres(allFilmsGenres);
         }
         return films;
+    }
+
+    public void isFilmExist(int filmId) {
+        int count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM Films where film_id=?",
+                new Object[] { filmId }, Integer.class);
+        if (count == FILM_DOESNT_EXIST) {
+            throw new RequiredObjectWasNotFound("User or Film not found");
+        }
     }
 }

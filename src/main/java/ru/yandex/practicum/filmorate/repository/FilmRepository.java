@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.repository;
 
 
+import ru.yandex.practicum.filmorate.model.film.Director;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.model.film.Genre;
 import ru.yandex.practicum.filmorate.model.film.Mpa;
@@ -32,13 +33,17 @@ public interface FilmRepository {
 
     void deleteFilmById(int id);
 
+    List<Film> getMostPopularsByYear(String startYear, String endYear, int limit);
+
+    List<Film> getMostPopularsByGenre(int genreId, int limit);
+
+    List<Film> getMostPopularsByYearAndGenre(int genreId, String startYear, String endYear, int limit);
+
     List<Film> getCommonFilms(int userId, int friendId);
 
     List<Film> getSortedDirectorFilms(int directorId, String sortBy);
 
-    void insertDirectorToFilm(int filmId, int directorId);
-
-    List<Film> getMostPopulars(int limit, int genreId, int year);
+    void insertDirectorToFilm(int filmId, List<Director> directors);
 
     List<Film> searchFilms();
 

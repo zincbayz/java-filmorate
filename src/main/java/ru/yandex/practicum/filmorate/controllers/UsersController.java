@@ -58,12 +58,12 @@ public class UsersController {
 
     @PostMapping()
     public User createUser(@Valid @RequestBody User user) {
-        return userServiceImpl.create(buildUser(user));
+        return userServiceImpl.create(user);
     }
 
     @PutMapping()
     public User updateUser(@Valid @RequestBody User user) {
-        return userServiceImpl.update(buildUser(user));
+        return userServiceImpl.update(user);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
@@ -80,15 +80,5 @@ public class UsersController {
     @DeleteMapping("/{id}")
     public void deleteUserById(@PathVariable int id) {
         userServiceImpl.deleteUserById(id);
-    }
-
-    private User buildUser(User user) {
-        return User.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .login(user.getLogin())
-                .name(user.getName())
-                .birthday(user.getBirthday())
-                .build();
     }
 }

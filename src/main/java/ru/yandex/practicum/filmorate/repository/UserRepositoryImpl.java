@@ -5,24 +5,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.Util.FeedMapper;
+import ru.yandex.practicum.filmorate.util.FeedMapper;
 import ru.yandex.practicum.filmorate.exception_handler.exceptions.RequiredObjectWasNotFound;
-import ru.yandex.practicum.filmorate.Util.FilmMapper;
+import ru.yandex.practicum.filmorate.util.FilmMapper;
 import ru.yandex.practicum.filmorate.model.film.Film;
 import ru.yandex.practicum.filmorate.model.user.Feed;
 import ru.yandex.practicum.filmorate.model.user.User;
-import ru.yandex.practicum.filmorate.Util.UserMapper;
+import ru.yandex.practicum.filmorate.util.UserMapper;
+import ru.yandex.practicum.filmorate.util.enums.EventType;
+import ru.yandex.practicum.filmorate.util.enums.Operation;
 
 import java.util.List;
 @Slf4j
 @Component
 public class UserRepositoryImpl implements UserRepository {
+    private final static int USER_DOESNT_EXIST = 0;
 
     private final JdbcTemplate jdbcTemplate;
+    private final FilmRepositoryImpl filmRepository;
 
     @Autowired
-    public UserRepositoryImpl(JdbcTemplate jdbcTemplate) {
+    public UserRepositoryImpl(JdbcTemplate jdbcTemplate, FilmRepositoryImpl filmRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.filmRepository = filmRepository;
     }
 
 
@@ -38,10 +43,9 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public List<User> getUsersFriends(int id) {
-        isRecordedEntity(id);
+    public List<User> getUsersFriends(int userId) {
         final String sqlQuery = "SELECT * FROM USERS WHERE user_id IN (SELECT friend_id FROM Friends WHERE user_id=?)";
-        return jdbcTemplate.query(sqlQuery, new UserMapper(), id);
+        return jdbcTemplate.query(sqlQuery, new UserMapper(), userId);
     }
 
     @Override
@@ -63,13 +67,7 @@ public class UserRepositoryImpl implements UserRepository {
         List<Film> recommendationFilms = jdbcTemplate.query(getRecommendationFilms,
                 new FilmMapper(), id, id, id);
 
-        FilmRepositoryImpl film = new FilmRepositoryImpl(jdbcTemplate);
-
-        for(Film next: recommendationFilms){
-            next.setGenres(film.getAllFilmsGenres(next.getId()));
-        }
-
-        return recommendationFilms;
+        return filmRepository.addGenresInFilm(recommendationFilms);
     }
 
     @Override
@@ -87,17 +85,6 @@ public class UserRepositoryImpl implements UserRepository {
                 new UserMapper());
     }
 
-    public boolean isUserExist(int userId) {
-        String sql = "SELECT COUNT(*) FROM Users where user_id=?";
-        int count = jdbcTemplate.queryForObject(sql,
-                new Object[] { userId }, Integer.class);
-        if (count >= 1)
-        {
-            return true;
-        }
-        return false;
-    }
-
     @Override
     public User update(User user, int userId) {
         final String sqlQuery = "UPDATE Users SET email=?, login=?, name=?, birthday=? WHERE user_id=?";
@@ -109,8 +96,8 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public void addFriend(int id, int friendId) throws EmptyResultDataAccessException{
-        isRecordedEntity(friendId);
         jdbcTemplate.update("INSERT INTO Friends (user_id, friend_id) VALUES (?, ?)", id, friendId);
+
     }
 
     @Override
@@ -121,14 +108,12 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public void deleteUserById(int id) {
-        final String sqlQuery = "DELETE FROM users WHERE USER_ID = ?";
-        jdbcTemplate.update(sqlQuery, id);
+        jdbcTemplate.update("DELETE FROM users WHERE USER_ID = ?", id);
     }
 
 
     @Override
     public List<Feed> getFeed(int userId) {
-        isRecordedEntity(userId);
         return jdbcTemplate.query("SELECT * FROM Feeds WHERE user_id=? " +
                         "UNION " +
                         "SELECT * FROM Feeds " +
@@ -137,16 +122,16 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public void insertFeed(int userId, String eventType, String operation, int entityId) {
+    public void insertFeed(int userId, EventType eventType, Operation operation, int entityId) {
         final String feedQuery = "INSERT INTO Feeds (user_id, event_type, operation, entity_id) VALUES (?, ?, ?, ?)";
         jdbcTemplate.update(feedQuery,
-                userId, eventType, operation, entityId);
+                userId, eventType.getEventType(), operation.getOperation(), entityId);
     }
 
-    private void isRecordedEntity(int id) {
-        try {
-            getUser(id);
-        } catch (EmptyResultDataAccessException e) {
+    public void isUserExist(int userId) {
+        int count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM Users where user_id=?",
+                new Object[] { userId }, Integer.class);
+        if (count == USER_DOESNT_EXIST) {
             throw new RequiredObjectWasNotFound("User not found");
         }
     }
